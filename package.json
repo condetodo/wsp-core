@@ -1,0 +1,21 @@
+{
+  "name": "whatsapp-manager",
+  "version": "0.1.0",
+  "description": "Backend de integración directa con la WhatsApp Cloud API de Meta.",
+  "private": true,
+  "scripts": {
+    "start": "node webhook.js",
+    "send": "node send.js",
+    "webhook": "node webhook.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.105.0",
+    "bcryptjs": "^3.0.3",
+    "cookie-session": "^2.1.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg": "^8.22.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  }
+}

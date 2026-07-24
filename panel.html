@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/assets/branding.css">
+<script src="/assets/branding.js" defer></script>
+<title>Panel del asesor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#efece4;
+    --surface:#fffdf8;
+    --surface-2:#f7f4ec;
+    --ink:#23211d;
+    --muted:#827d72;
+    --faint:#a8a294;
+    --line:#e7e1d4;
+    --line-strong:#d9d2c2;
+    
+    
+    
+    --warn:#c1502a;          /* terracota: en espera */
+    --warn-soft:#f7e7df;
+    --shadow-sm:0 1px 2px rgba(40,34,24,.06), 0 1px 3px rgba(40,34,24,.04);
+    --shadow-md:0 6px 20px -8px rgba(40,34,24,.18), 0 2px 6px rgba(40,34,24,.05);
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:'Hanken Grotesk',system-ui,sans-serif;
+    margin:0;color:var(--ink);
+    background:
+      radial-gradient(1200px 500px at 85% -10%, rgba(19,122,82,.07), transparent 60%),
+      radial-gradient(900px 500px at -5% 110%, rgba(193,80,42,.06), transparent 55%),
+      var(--bg);
+    height:100vh;display:flex;flex-direction:column;
+    -webkit-font-smoothing:antialiased;
+    font-feature-settings:"ss01","cv01";
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px 20px;background:rgba(255,253,248,.82);
+    backdrop-filter:saturate(140%) blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .mono{
+    width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+    background:linear-gradient(150deg,var(--accent),var(--accent-ink));
+    color:#fff;font-family:'Bricolage Grotesque';font-weight:800;font-size:15px;
+    letter-spacing:.5px;box-shadow:var(--shadow-sm);
+  }
+  .brand h1{
+    font-family:'Bricolage Grotesque';font-weight:700;font-size:16px;margin:0;line-height:1.1;
+  }
+  .brand p{margin:1px 0 0;font-size:12px;color:var(--muted);letter-spacing:.2px}
+  .brand-logo{height:46px;width:auto;display:block}
+  .head-right{display:flex;align-items:center;gap:14px}
+
+  .badge{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:6px 12px 6px 10px;border-radius:999px;font-size:13px;font-weight:600;
+    background:var(--surface-2);color:var(--muted);border:1px solid var(--line);
+    transition:.25s;
+  }
+  .badge.hot{background:var(--warn-soft);color:var(--warn);border-color:#eccab9}
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+  .badge.hot .dot{background:var(--warn);animation:pulse 1.6s ease-out infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(193,80,42,.5)}70%{box-shadow:0 0 0 7px rgba(193,80,42,0)}100%{box-shadow:0 0 0 0 rgba(193,80,42,0)}}
+
+  .me{display:flex;align-items:center;gap:9px;font-size:13px}
+  .me .av{width:30px;height:30px;font-size:12px}
+  .me b{font-weight:600}
+  .btn{
+    font-family:inherit;cursor:pointer;border:1px solid var(--line-strong);
+    background:var(--surface);color:var(--ink);font-weight:600;font-size:13px;
+    padding:8px 13px;border-radius:10px;transition:.18s;
+  }
+  .btn:hover{background:var(--surface-2);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+  .btn:active{transform:translateY(0)}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  .btn.ghost:hover{background:var(--surface-2);color:var(--ink)}
+  header form{margin:0}
+
+  /* ---------- Layout ---------- */
+  main{flex:1;display:flex;min-height:0;gap:14px;padding:14px}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;min-height:0}
+
+  #lista{width:288px;flex:none;overflow-y:auto;padding:8px}
+  #centro{flex:1;min-width:0;overflow:hidden}
+  #ficha-wrap{width:288px;flex:none;overflow-y:auto}
+
+  /* ---------- Lista ---------- */
+  .group{padding:14px 12px 6px;display:flex;align-items:center;gap:8px}
+  .group .gdot{width:9px;height:9px;border-radius:50%}
+  .gdot.wait{background:var(--warn)}
+  .gdot.live{background:var(--accent)}
+  .gdot.bot{background:#1f6f8b}
+  .group h2{font-family:'Bricolage Grotesque';font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:0}
+  .group .count{margin-left:auto;font-size:11px;font-weight:700;color:var(--faint);background:var(--surface-2);padding:2px 8px;border-radius:999px}
+
+  .item{
+    display:flex;align-items:center;gap:11px;padding:11px;border-radius:12px;
+    cursor:pointer;border:1px solid transparent;margin-bottom:3px;transition:.16s;
+    animation:rise .35s cubic-bezier(.2,.7,.3,1) both;
+  }
+  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .item:hover{background:var(--surface-2)}
+  .item.sel{background:var(--accent-soft);border-color:#bfe0cf}
+  .item.sel .name{color:var(--accent-ink)}
+  .av{
+    width:38px;height:38px;flex:none;border-radius:11px;display:grid;place-items:center;
+    color:#fff;font-weight:700;font-size:14px;font-family:'Bricolage Grotesque';
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);
+  }
+  .item-main{min-width:0;flex:1}
+  .name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .sub.mine{color:var(--accent);font-weight:600}
+  .take{
+    font-family:inherit;cursor:pointer;border:none;flex:none;
+    background:var(--warn);color:#fff;font-weight:700;font-size:12px;
+    padding:7px 12px;border-radius:9px;transition:.16s;box-shadow:var(--shadow-sm);
+  }
+  .take:hover{filter:brightness(1.06);transform:translateY(-1px)}
+  .take.bot{background:#1f6f8b}
+  .solo-lectura{
+    display:none;align-items:center;justify-content:center;gap:8px;
+    padding:12px 14px;border-top:1px solid var(--line);background:var(--surface-2);
+    font-size:13px;color:var(--muted);
+  }
+  .empty-line{padding:6px 12px 14px;font-size:12.5px;color:var(--faint)}
+
+  /* ---------- Centro / chat ---------- */
+  .chathead{
+    display:none;align-items:center;gap:11px;padding:12px 16px;
+    border-bottom:1px solid var(--line);background:var(--surface-2);
+    border-radius:var(--r) var(--r) 0 0;
+  }
+  .chathead .name{font-size:15px}
+  .chathead .sub{font-variant-numeric:tabular-nums}
+  .chathead .spacer{flex:1}
+
+  .msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:20px 22px;scroll-behavior:smooth}
+  .b{max-width:72%;padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.45;box-shadow:var(--shadow-sm);position:relative;animation:rise .3s ease both}
+  .b .who{display:block;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;margin-bottom:3px;opacity:.7}
+  .cli{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:5px}
+  .cli .who{color:var(--muted)}
+  .bot{align-self:flex-end;background:var(--surface-2);border:1px solid var(--line);border-bottom-right-radius:5px}
+  .bot .who{color:var(--faint)}
+  .ase{align-self:flex-end;background:linear-gradient(160deg,var(--accent),var(--accent-ink));color:#fff;border-bottom-right-radius:5px}
+  .ase .who{color:rgba(255,255,255,.85)}
+
+  .placeholder{margin:auto;text-align:center;color:var(--faint);padding:40px;max-width:300px}
+  .placeholder .ic{font-size:34px;margin-bottom:10px;opacity:.6}
+  .placeholder b{display:block;color:var(--muted);font-family:'Bricolage Grotesque';font-size:16px;margin-bottom:5px;font-weight:700}
+  .placeholder span{font-size:13px;line-height:1.5}
+
+  /* ---------- Composer ---------- */
+  .barra{display:none;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid var(--line);background:var(--surface)}
+  .barra input{
+    flex:1;font-family:inherit;font-size:14px;color:var(--ink);
+    padding:11px 16px;border:1px solid var(--line-strong);border-radius:999px;
+    background:var(--surface-2);transition:.18s;
+  }
+  .barra input:focus{outline:none;border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px var(--accent-soft)}
+  .send{
+    flex:none;width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;
+    background:linear-gradient(160deg,var(--accent),var(--accent-ink));color:#fff;
+    font-size:17px;display:grid;place-items:center;transition:.18s;box-shadow:var(--shadow-md);
+  }
+  .send:hover{transform:translateY(-1px) scale(1.04)}
+  .send:active{transform:scale(.96)}
+
+  /* ---------- Ficha ---------- */
+  .ficha-head{padding:14px 16px 0;display:flex;align-items:center;gap:8px}
+  .ficha-head h2{font-family:'Bricolage Grotesque';font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:0}
+  #ficha{padding:6px 16px 18px;font-size:13px;line-height:1.5;color:var(--ink);word-wrap:break-word}
+  #ficha:empty::after{content:'Abrí un cliente para ver su ficha 360.';color:var(--faint);font-style:italic}
+  .f-sec{margin-top:14px}
+  .f-sec h3{
+    font-family:'Bricolage Grotesque';font-size:11px;font-weight:700;letter-spacing:.5px;
+    text-transform:uppercase;color:var(--faint);margin:0 0 6px;display:flex;align-items:center;gap:6px;
+  }
+  .f-row{display:flex;justify-content:space-between;gap:8px;padding:3px 0}
+  .f-row .k{color:var(--muted);flex:none}
+  .f-row .v{text-align:right;font-weight:600;min-width:0;overflow-wrap:anywhere}
+  .f-card{
+    background:var(--surface-2);border:1px solid var(--line);border-radius:10px;
+    padding:8px 11px;margin-bottom:6px;
+  }
+  .f-card b{display:block;font-size:13px}
+  .f-card small{color:var(--muted);font-size:12px}
+  .f-chip{
+    display:inline-block;background:var(--surface);border:1px solid var(--line-strong);
+    border-radius:6px;padding:0 6px;font-size:11.5px;font-weight:700;letter-spacing:.5px;
+    font-variant-numeric:tabular-nums;
+  }
+  .f-turno{border-left:3px solid var(--accent)}
+  .f-vacio{color:var(--faint);font-size:12.5px}
+  .f-resumen{color:var(--muted);font-size:12.5px;line-height:1.55}
+
+  /* scrollbars */
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:99px;border:2px solid var(--surface)}
+  ::-webkit-scrollbar-thumb:hover{background:var(--faint)}
+
+  @media(max-width:1080px){#ficha-wrap{display:none}}
+  @media(max-width:760px){#lista{width:230px}}
+
+  /* ---------- Rail lateral ---------- */
+  .shell{display:flex;flex:1;min-height:0}
+  .rail{width:190px;flex:none;background:var(--accent-ink);display:flex;flex-direction:column;overflow:auto}
+  .logo-card{margin:14px 12px 10px;background:#fff;border-radius:10px;padding:8px 10px}
+  .logo-card img{display:block;width:100%;max-width:110px;margin:0 auto}
+  .rail-label{font-size:10px;color:var(--rail-muted);letter-spacing:1.5px;margin:8px 18px 4px;text-transform:uppercase}
+  .rail a{
+    display:flex;align-items:center;gap:10px;margin:2px 10px;padding:8px 10px;border-radius:9px;
+    text-decoration:none;color:var(--rail-muted);font-size:13px;font-weight:600;transition:.16s;
+  }
+  .rail a svg{width:17px;height:17px;flex:none}
+  .rail a:hover{background:var(--rail-hover);color:#fff}
+  .rail a.active{background:#fff;color:var(--accent-ink)}
+  .rail-foot{margin-top:auto;padding:10px;border-top:1px solid var(--rail-line)}
+  .rail-user{display:flex;align-items:center;gap:9px;background:var(--rail-deep);border-radius:9px;padding:8px 10px}
+  .rail-user .av{width:28px;height:28px;border-radius:8px;flex:none;background:var(--accent);color:#fff;font-size:12px}
+  .rail-user .info{flex:1;min-width:0;color:#fff}
+  .rail-user .info b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rail-user .info small{font-size:10px;color:var(--rail-muted)}
+  .rail-user form{margin:0}
+  .rail-user button{cursor:pointer;border:0;background:none;color:var(--rail-muted);padding:4px;display:grid;place-items:center}
+  .rail-user button:hover{color:#fff}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="rail">
+    <div class="logo-card"><img src="/assets/logo.svg" alt=""></div>
+    <div class="rail-label">Panel</div>
+    <a href="/panel" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20l1.3-3.9C1.976 12.663 2.874 8.228 6.4 5.726c3.526-2.501 8.59-2.296 11.845.48 3.255 2.777 3.695 7.266 1.029 10.501-2.666 3.235-7.615 4.215-11.574 2.293z"/></svg>Conversaciones</a>
+    <a href="/panel/plantillas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 9h1"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>Plantillas</a>
+    <a href="/panel/encuestas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17.75l-6.172 3.245 1.179-6.873-5-4.867 6.9-1L12 2l3.093 6.255 6.9 1-5 4.867 1.179 6.873z"/></svg>Encuestas</a>
+    <a href="/panel/envio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14L21 3"/><path d="M21 3l-6.5 18a.55.55 0 0 1-1 0l-3.5-7-7-3.5a.55.55 0 0 1 0-1z"/></svg>Envío</a>
+    <a href="/panel/historial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><path d="M9 12h.01"/><path d="M13 12h2"/><path d="M9 16h.01"/><path d="M13 16h2"/></svg>Historial</a>
+    <a href="/panel/metricas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="6" height="8" rx="1"/><rect x="9" y="8" width="6" height="12" rx="1"/><rect x="15" y="4" width="6" height="16" rx="1"/></svg>Métricas</a>
+    <a href="/panel/costos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A2 2 0 0 0 13 8h-2a2 2 0 1 0 0 4h2a2 2 0 1 1 0 4h-2a2 2 0 0 1-1.8-1"/><path d="M12 7v10"/></svg>Costos</a>
+    <div class="rail-foot">
+  <div class="rail-user">
+      <span class="av" id="yo-av">·</span>
+      <div class="info"><b id="yo">…</b><small>Conectado</small></div>
+      <form method="post" action="/panel/logout"><button type="submit" title="Cerrar sesión" aria-label="Cerrar sesión"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2"/><path d="M9 12h12l-3-3m0 6 3-3"/></svg></button></form>
+    </div>
+  </div>
+  </nav>
+<main>
+  <!-- Lista -->
+  <aside class="panel" id="lista"></aside>
+
+  <!-- Centro -->
+  <section class="panel" id="centro">
+    <div class="chathead" id="chathead">
+      <span class="av" id="chat-av">·</span>
+      <div class="item-main">
+        <div class="name" id="chat-name"></div>
+        <div class="sub" id="chat-sub"></div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn" id="intervenir" style="display:none" title="El bot deja de responder y seguís vos">🙋 Intervenir</button>
+      <button class="btn" id="cerrar" title="Resume la charla y devuelve el cliente al bot">✓ Cerrar caso</button>
+    </div>
+    <div class="msgs" id="msgs">
+      <div class="placeholder">
+        <div class="ic">💬</div>
+        <b>Sin conversación abierta</b>
+        <span>Elegí un cliente de la lista para ver el chat y su ficha 360.</span>
+      </div>
+    </div>
+    <div class="solo-lectura" id="solo-lectura">🤖 Conversación a cargo del bot (solo lectura). Usá “Intervenir” para responder vos.</div>
+    <div class="barra" id="barra">
+      <input id="texto" placeholder="Escribí tu respuesta…" autocomplete="off">
+      <button class="send" id="enviar" title="Enviar">➤</button>
+    </div>
+  </section>
+
+  <!-- Ficha -->
+  <aside class="panel" id="ficha-wrap">
+    <div class="ficha-head"><h2>📋 Ficha del cliente</h2></div>
+    <div id="ficha"></div>
+  </aside>
+</main>
+</div>
+
+<audio id="ding" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="></audio>
+<script>
+let actual = null;        // número del cliente abierto
+let yo = null;            // mi usuario
+let prevEspera = 0;       // para detectar nuevos en espera
+const nombres = {};       // numero -> nombre (para el encabezado del chat)
+const subs = {};          // numero -> subtítulo de estado
+const estados = {};       // numero -> 'bot' | 'en_espera' | 'en_atencion'
+
+// Paleta determinística para avatares.
+const AV_COLORS = ['#137a52','#c1502a','#1f6f8b','#8a5a2b','#6a4c93','#1d6a4f','#a23b5e','#3a6ea5'];
+function colorDe(s){ let h=0; for(const c of String(s)) h=(h*31+c.charCodeAt(0))>>>0; return AV_COLORS[h%AV_COLORS.length]; }
+function iniciales(nombre){
+  const p = String(nombre||'').trim().split(/\s+/).filter(Boolean);
+  if(!p.length) return '?';
+  return (p[0][0] + (p[1]?p[1][0]:'')).toUpperCase();
+}
+
+async function jget(u){ const r=await fetch(u); if(r.status===401){location.href='/panel/login';return null;} return r.json(); }
+async function jpost(u,b){ const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); if(r.status===401){location.href='/panel/login';return null;} return r.json(); }
+
+function avatarHTML(nombre, cls){
+  return '<span class="av'+(cls?' '+cls:'')+'" style="background:'+colorDe(nombre)+'">'+escapeHtml(iniciales(nombre))+'</span>';
+}
+
+// "hace 5 min", "hace 3 h" a partir de un timestamp en ms.
+function hace(ts){
+  if(!ts) return '';
+  const min = Math.max(0, Math.round((Date.now()-ts)/60000));
+  if(min < 1) return 'ahora mismo';
+  if(min < 60) return 'hace '+min+' min';
+  return 'hace '+Math.round(min/60)+' h';
+}
+
+async function cargarLista(){
+  const data = await jget('/panel/api/clientes');
+  if(!data) return;
+  yo = data.yo;
+  document.getElementById('yo').textContent = yo || '';
+  document.getElementById('yo-av').textContent = iniciales(yo);
+
+  const espera = data.clientes.filter(c=>c.estado==='en_espera');
+  const atencion = data.clientes.filter(c=>c.estado==='en_atencion');
+  const bot = data.bot || [];
+
+  if(espera.length > prevEspera){
+    document.getElementById('ding').play().catch(()=>{});
+    document.title = '('+espera.length+') Cliente esperando · '+BRAND.nombre;
+  } else if(espera.length===0){ document.title = BRAND.nombre+' · Panel'; }
+  prevEspera = espera.length;
+
+  const html = [];
+  html.push('<div class="group"><span class="gdot wait"></span><h2>En espera</h2><span class="count">'+espera.length+'</span></div>');
+  if(!espera.length) html.push('<div class="empty-line">Nadie esperando ahora mismo.</div>');
+  espera.forEach((c,i)=>{
+    nombres[c.numero]=c.nombre; subs[c.numero]='Esperando ser atendido'; estados[c.numero]='en_espera';
+    html.push(
+      '<div class="item'+(c.numero===actual?' sel':'')+'" style="animation-delay:'+(i*30)+'ms" onclick="abrir(\''+c.numero+'\')">'+
+        avatarHTML(c.nombre)+
+        '<div class="item-main"><div class="name">'+escapeHtml(c.nombre)+'</div><div class="sub">Toca para ver · o tomá el caso</div></div>'+
+        '<button class="take" onclick="event.stopPropagation();tomarCliente(\''+c.numero+'\')">Tomar</button>'+
+      '</div>'
+    );
+  });
+
+  html.push('<div class="group"><span class="gdot live"></span><h2>En atención</h2><span class="count">'+atencion.length+'</span></div>');
+  if(!atencion.length) html.push('<div class="empty-line">Sin casos en atención.</div>');
+  atencion.forEach((c,i)=>{
+    const mio = c.atendido_por===yo;
+    const quien = mio ? 'Atendido por mí' : 'Atendido por '+c.atendido_por;
+    nombres[c.numero]=c.nombre; subs[c.numero]=quien; estados[c.numero]='en_atencion';
+    html.push(
+      '<div class="item'+(c.numero===actual?' sel':'')+'" style="animation-delay:'+(i*30)+'ms" onclick="abrir(\''+c.numero+'\')">'+
+        avatarHTML(c.nombre)+
+        '<div class="item-main"><div class="name">'+escapeHtml(c.nombre)+'</div><div class="sub'+(mio?' mine':'')+'">'+escapeHtml(quien)+'</div></div>'+
+      '</div>'
+    );
+  });
+
+  html.push('<div class="group"><span class="gdot bot"></span><h2>En conversación</h2><span class="count">'+bot.length+'</span></div>');
+  if(!bot.length) html.push('<div class="empty-line">El bot no tiene charlas activas (últimas 24 hs).</div>');
+  bot.forEach((c,i)=>{
+    nombres[c.numero]=c.nombre; subs[c.numero]='Con el bot'; estados[c.numero]='bot';
+    html.push(
+      '<div class="item'+(c.numero===actual?' sel':'')+'" style="animation-delay:'+(i*30)+'ms" onclick="abrir(\''+c.numero+'\')">'+
+        avatarHTML(c.nombre)+
+        '<div class="item-main"><div class="name">'+escapeHtml(c.nombre)+'</div><div class="sub">🤖 '+hace(c.ultimo_mensaje)+'</div></div>'+
+        '<button class="take bot" onclick="event.stopPropagation();intervenirCliente(\''+c.numero+'\')">Intervenir</button>'+
+      '</div>'
+    );
+  });
+
+  document.getElementById('lista').innerHTML = html.join('');
+  actualizarControles();
+}
+
+// Muestra u oculta el composer y los botones según quién maneja la charla
+// abierta: con el bot es solo lectura + "Intervenir"; derivada, se puede
+// escribir y cerrar el caso. Se re-aplica en cada refresco de la lista por si
+// el estado cambió mientras estaba abierta (ej: el cliente pidió un humano).
+function actualizarControles(){
+  if(!actual) return;
+  const esBot = estados[actual]==='bot';
+  document.getElementById('barra').style.display = esBot ? 'none' : 'flex';
+  document.getElementById('solo-lectura').style.display = esBot ? 'flex' : 'none';
+  document.getElementById('intervenir').style.display = esBot ? '' : 'none';
+  document.getElementById('cerrar').style.display = esBot ? 'none' : '';
+}
+
+async function tomarCliente(numero){
+  const r = await jpost('/panel/api/tomar',{numero});
+  if(!r) return;
+  if(!r.tomado){ alert('Ese cliente ya lo tomó otro asesor.'); }
+  else { abrir(numero); }
+  cargarLista();
+}
+
+async function abrir(numero){
+  actual = numero;
+  document.getElementById('chathead').style.display='flex';
+  actualizarControles();
+  pintarCabecera();
+  await cargarChat();
+  cargarLista();
+  if(estados[numero]!=='bot') document.getElementById('texto').focus();
+}
+
+async function intervenirCliente(numero){
+  if(!confirm('¿Intervenir esta conversación? El bot deja de responderle a este cliente y seguís vos. Al terminar, usá “Cerrar caso” para devolvérselo al bot.')) return;
+  const r = await jpost('/panel/api/intervenir',{numero});
+  if(!r) return;
+  if(!r.tomado){ alert('No se pudo intervenir (puede que otro asesor lo haya tomado justo antes).'); cargarLista(); return; }
+  estados[numero]='en_atencion'; subs[numero]='Atendido por mí';
+  abrir(numero);
+}
+
+function pintarCabecera(){
+  if(!actual) return;
+  const nombre = nombres[actual] || actual;
+  const av = document.getElementById('chat-av');
+  av.textContent = iniciales(nombre);
+  av.style.background = colorDe(nombre);
+  document.getElementById('chat-name').textContent = nombre;
+  document.getElementById('chat-sub').textContent = (subs[actual]||'') + ' · ' + actual;
+}
+
+async function cargarChat(){
+  if(!actual) return;
+  const data = await jget('/panel/api/chat?numero='+encodeURIComponent(actual));
+  if(!data) return;
+  const cont = document.getElementById('msgs');
+  const nearBottom = cont.scrollHeight - cont.scrollTop - cont.clientHeight < 80;
+  cont.innerHTML = data.mensajes.map(m=>{
+    const cls = m.autor==='asesor' ? 'ase' : (m.rol==='assistant' ? 'bot' : 'cli');
+    const quien = m.autor==='asesor' ? 'Asesor' : (m.rol==='assistant' ? 'Bot' : 'Cliente');
+    return '<div class="b '+cls+'"><span class="who">'+quien+'</span>'+escapeHtml(m.contenido)+'</div>';
+  }).join('') || '<div class="placeholder"><div class="ic">🌱</div><b>Sin mensajes</b><span>Todavía no hay historial con este cliente.</span></div>';
+  if(nearBottom) cont.scrollTop = cont.scrollHeight;
+  document.getElementById('ficha').innerHTML = renderFicha(data.ficha);
+}
+
+// 'YYYY-MM-DD' (o ISO) -> "sáb 11/07/26". Mediodía UTC para que no corra el día.
+function fechaCorta(f){
+  if(!f) return '—';
+  const iso = String(f).slice(0,10);
+  const d = new Date(iso+'T12:00:00Z');
+  if(isNaN(d)) return iso;
+  return d.toLocaleDateString('es-AR',{weekday:'short',day:'2-digit',month:'2-digit',year:'2-digit',timeZone:'UTC'});
+}
+
+// Arma la ficha 360 prolija por secciones a partir de los datos estructurados.
+function renderFicha(f){
+  if(!f) return '';
+  const h = [];
+
+  h.push('<div class="f-sec"><h3>👤 Contacto</h3>');
+  h.push('<div class="f-row"><span class="k">Nombre</span><span class="v">'+escapeHtml(f.nombre||'Sin registrar')+'</span></div>');
+  h.push('<div class="f-row"><span class="k">Teléfono</span><span class="v">'+escapeHtml(f.telefono||'—')+'</span></div>');
+  if(f.correo) h.push('<div class="f-row"><span class="k">Correo</span><span class="v">'+escapeHtml(f.correo)+'</span></div>');
+  h.push('</div>');
+
+  // Las secciones del VERTICAL (ej. vehículos y turnos del concesionario) se
+  // agregan acá por cliente, leyendo los campos extra que sume la ficha.
+
+  if(f.resumen){
+    h.push('<div class="f-sec"><h3>📝 Última conversación</h3><div class="f-resumen">'+escapeHtml(f.resumen)+'</div></div>');
+  }
+
+  return h.join('');
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+document.getElementById('enviar').onclick = async ()=>{
+  const inp = document.getElementById('texto');
+  const texto = inp.value.trim();
+  if(!texto || !actual) return;
+  const r = await jpost('/panel/api/responder',{numero:actual,texto});
+  if(!r) return;
+  if(!r.entregado){ alert('No se pudo entregar (la ventana de 24 h del cliente pudo haber expirado).'); return; }
+  inp.value=''; cargarChat();
+};
+document.getElementById('texto').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('enviar').click(); });
+
+document.getElementById('intervenir').onclick = ()=>{ if(actual) intervenirCliente(actual); };
+
+document.getElementById('cerrar').onclick = async ()=>{
+  if(!actual || !confirm('¿Cerrar el caso? Se resume la charla y el cliente vuelve al bot.')) return;
+  const r = await jpost('/panel/api/cerrar',{numero:actual});
+  if(!r) return;
+  actual=null;
+  document.getElementById('barra').style.display='none';
+  document.getElementById('chathead').style.display='none';
+  document.getElementById('msgs').innerHTML='<div class="placeholder"><div class="ic">✓</div><b>Caso cerrado</b><span>La conversación se resumió y el cliente volvió al bot.</span></div>';
+  document.getElementById('ficha').textContent='';
+  cargarLista();
+};
+
+// Polling: lista y chat cada 4s.
+cargarLista();
+setInterval(cargarLista, 4000);
+setInterval(cargarChat, 4000);
+</script>
+</body>
+</html>

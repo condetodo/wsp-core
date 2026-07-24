@@ -1,0 +1,18 @@
+/* ============================================================
+   BRANDING DEL CLIENTE — junto con branding.js y logo.svg, el único lugar
+   a tocar al dar de alta un negocio:
+     1) --accent / --accent-ink: el color de la marca (claro y oscuro).
+     2) el nombre del negocio: en branding.js.
+     3) el logo: reemplazá assets/logo.svg (mismo nombre de archivo).
+   El resto de los tonos (fondos suaves, rail lateral) se derivan solos.
+   ============================================================ */
+:root{
+  --accent:#0F6BD7;
+  --accent-ink:#0a4a97;
+  --accent-soft:color-mix(in srgb, var(--accent) 12%, white);
+  /* Rail lateral del panel (derivados del color oscuro). */
+  --rail-hover:color-mix(in srgb, var(--accent-ink) 82%, white);
+  --rail-deep:color-mix(in srgb, var(--accent-ink) 78%, black);
+  --rail-muted:color-mix(in srgb, var(--accent-ink) 32%, white);
+  --rail-line:color-mix(in srgb, var(--accent-ink) 65%, white);
+}

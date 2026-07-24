@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/assets/branding.css">
+<script src="/assets/branding.js" defer></script>
+<title>Costos del agente</title>
+<style>
+  :root{--bg:#efece4;--surface:#fffdf8;--surface-2:#f7f4ec;--ink:#23211d;--muted:#827d72;
+    --line:#e7e1d4;--line-strong:#d9d2c2;
+    --ok:#137a52;--ok-soft:#e2f0e8;--err:#c1502a;--err-soft:#f7e7df;--r:14px;}
+  *{box-sizing:border-box}html,body{height:100%}
+  body{font-family:system-ui,sans-serif;margin:0;color:var(--ink);background:var(--bg);height:100vh;display:flex}
+  .rail{width:190px;flex:none;background:var(--accent-ink);display:flex;flex-direction:column;overflow:auto}
+  .logo-card{margin:14px 12px 10px;background:#fff;border-radius:10px;padding:8px 10px}
+  .logo-card img{display:block;width:100%;max-width:110px;margin:0 auto}
+  .rail-label{font-size:10px;color:var(--rail-muted);letter-spacing:1.5px;margin:8px 18px 4px;text-transform:uppercase}
+  .rail a{display:flex;align-items:center;gap:10px;margin:2px 10px;padding:8px 10px;border-radius:9px;
+    text-decoration:none;color:var(--rail-muted);font-size:13px;font-weight:600}
+  .rail a svg{width:17px;height:17px;flex:none}
+  .rail a:hover{background:var(--rail-hover);color:#fff}
+  .rail a.active{background:#fff;color:var(--accent-ink)}
+  .rail-foot{margin-top:auto;padding:10px;border-top:1px solid var(--rail-line)}
+  .rail-user{display:flex;align-items:center;gap:9px;background:var(--rail-deep);border-radius:9px;padding:8px 10px}
+  .rail-user .av{width:28px;height:28px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+  .rail-user .info{flex:1;min-width:0;color:#fff}
+  .rail-user .info b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rail-user .info small{font-size:10px;color:var(--rail-muted)}
+  .rail-user form{margin:0}
+  .rail-user button{cursor:pointer;border:0;background:none;color:var(--rail-muted);padding:4px;display:grid;place-items:center}
+  .rail-user button:hover{color:#fff}
+  .wrap{flex:1;overflow:auto;padding:24px}
+  h1{font-size:20px;margin:0 0 4px}.sub{color:var(--muted);margin:0 0 14px;font-size:14px}
+  h2{font-size:15px;margin:0 0 2px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:16px}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+  .tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+  .tile .k{font-size:12px;font-weight:600;color:var(--muted)}
+  .tile .v{font-size:22px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+  .tile .d{font-size:12px;color:var(--muted);margin-top:2px}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:13px}
+  th{color:var(--muted);font-weight:600}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .muted{color:var(--muted)}
+</style>
+</head>
+<body>
+<nav class="rail">
+  <div class="logo-card"><img src="/assets/logo.svg" alt=""></div>
+  <div class="rail-label">Panel</div>
+  <a href="/panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20l1.3-3.9C1.976 12.663 2.874 8.228 6.4 5.726c3.526-2.501 8.59-2.296 11.845.48 3.255 2.777 3.695 7.266 1.029 10.501-2.666 3.235-7.615 4.215-11.574 2.293z"/></svg>Conversaciones</a>
+  <a href="/panel/plantillas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 9h1"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>Plantillas</a>
+  <a href="/panel/encuestas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17.75l-6.172 3.245 1.179-6.873-5-4.867 6.9-1L12 2l3.093 6.255 6.9 1-5 4.867 1.179 6.873z"/></svg>Encuestas</a>
+  <a href="/panel/envio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14L21 3"/><path d="M21 3l-6.5 18a.55.55 0 0 1-1 0l-3.5-7-7-3.5a.55.55 0 0 1 0-1z"/></svg>Envío</a>
+  <a href="/panel/historial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><path d="M9 12h.01"/><path d="M13 12h2"/><path d="M9 16h.01"/><path d="M13 16h2"/></svg>Historial</a>
+  <a href="/panel/metricas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="6" height="8" rx="1"/><rect x="9" y="8" width="6" height="12" rx="1"/><rect x="15" y="4" width="6" height="16" rx="1"/></svg>Métricas</a>
+  <a href="/panel/costos" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A2 2 0 0 0 13 8h-2a2 2 0 1 0 0 4h2a2 2 0 1 1 0 4h-2a2 2 0 0 1-1.8-1"/><path d="M12 7v10"/></svg>Costos</a>
+  <div class="rail-foot">
+  <div class="rail-user">
+    <span class="av" id="railAv">·</span>
+    <div class="info"><b id="railYo">…</b><small>Conectado</small></div>
+    <form method="post" action="/panel/logout"><button type="submit" title="Cerrar sesión" aria-label="Cerrar sesión"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2"/><path d="M9 12h12l-3-3m0 6 3-3"/></svg></button></form>
+  </div>
+  </div>
+</nav>
+<script>
+fetch('/panel/api/yo').then(r=>r.json()).then(d=>{
+  const u=(d&&d.usuario)||'—';
+  document.getElementById('railYo').textContent=u;
+  document.getElementById('railAv').textContent=(u[0]||'·').toUpperCase();
+}).catch(()=>{});
+</script>
+<div class="wrap">
+  <h1>Costos del agente</h1>
+  <p class="sub">Cuánto gasta el bot en la API de Anthropic. Cada respuesta suma todas sus llamadas internas.</p>
+
+  <div class="card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div style="flex:1;min-width:220px">
+      <h2>Modelo del agente</h2>
+      <p class="sub" style="margin:0">El modelo de Claude con el que responde el bot. El cambio aplica al instante.</p>
+    </div>
+    <select id="selModelo" style="padding:9px 12px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface-2);font:inherit;color:var(--ink)"></select>
+    <button id="btnModelo" style="padding:9px 16px;border:0;border-radius:10px;background:var(--accent);color:#fff;font:inherit;font-weight:600;cursor:pointer" disabled>Guardar</button>
+    <span id="msgModelo" class="muted" style="font-size:13px"></span>
+  </div>
+
+  <div class="tiles">
+    <div class="tile"><div class="k">Este mes</div><div class="v" id="tMesCosto">—</div><div class="d" id="tMesDet"></div></div>
+    <div class="tile"><div class="k">Total histórico</div><div class="v" id="tTotCosto">—</div><div class="d" id="tTotDet"></div></div>
+    <div class="tile"><div class="k">Tokens este mes</div><div class="v" id="tMesTokens">—</div><div class="d">entrada + salida</div></div>
+    <div class="tile"><div class="k">Costo promedio</div><div class="v" id="tPromedio">—</div><div class="d">por respuesta del bot</div></div>
+  </div>
+
+  <div class="card" id="cardModelos" hidden>
+    <h2>Por modelo</h2>
+    <p class="sub">Desglose por modelo de Claude (útil cuando se testea otro modelo con MODELO_AGENTE).</p>
+    <table>
+      <thead><tr>
+        <th>Modelo</th><th class="num">Respuestas</th>
+        <th class="num">Entrada</th><th class="num">Salida</th>
+        <th class="num">Costo</th><th class="num">Promedio</th>
+      </tr></thead>
+      <tbody id="filasModelos"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px">
+        <h2>Por cliente</h2>
+        <p class="sub" style="margin:0">Acumulado de la conversación de cada cliente, de más caro a más barato.</p>
+      </div>
+      <input id="buscaCliente" type="search" placeholder="Buscar nombre o teléfono…"
+        style="padding:9px 12px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface-2);font:inherit;color:var(--ink);min-width:220px">
+    </div>
+    <table>
+      <thead><tr>
+        <th>Cliente</th><th>Teléfono</th>
+        <th class="num">Respuestas</th><th class="num">Tokens</th><th class="num">Costo</th><th>Último uso</th>
+      </tr></thead>
+      <tbody id="filasClientes"></tbody>
+    </table>
+    <button id="btnMasClientes" hidden
+      style="margin-top:10px;padding:8px 14px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface-2);font:inherit;color:var(--ink);cursor:pointer">
+      Mostrar más</button>
+  </div>
+
+  <div class="card">
+    <h2>Por día</h2>
+    <p class="sub">Últimos 30 días con actividad (hora de Argentina). Click en un día para ver el desglose por cliente.</p>
+    <table>
+      <thead><tr>
+        <th>Día</th><th class="num">Respuestas</th>
+        <th class="num">Entrada</th><th class="num">Salida</th><th class="num">Costo</th>
+      </tr></thead>
+      <tbody id="filasDias"></tbody>
+    </table>
+  </div>
+</div>
+<script>
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function usd(x){ return 'US$ ' + Number(x||0).toFixed(x>=1?2:4); }
+function miles(x){ return Number(x||0).toLocaleString('es-AR'); }
+function fecha(x){ try{ return new Date(x).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return x||'—'; } }
+function dia(x){ const [a,m,d]=x.split('-'); return `${d}/${m}/${a.slice(2)}`; }
+function nombre(p){ return [p.nombre,p.apellido].filter(Boolean).join(' ') || '—'; }
+
+// Selector de modelo del agente: carga el activo, y "Guardar" se habilita
+// solo cuando la selección difiere del activo.
+(async()=>{
+  const sel=document.getElementById('selModelo'), btn=document.getElementById('btnModelo'), msg=document.getElementById('msgModelo');
+  const r=await fetch('/panel/api/modelo');
+  if(!r.ok){ msg.textContent='No se pudo cargar el modelo.'; return; }
+  let { activo, disponibles }=await r.json();
+  sel.innerHTML=disponibles.map(m=>`<option value="${esc(m.id)}"${m.id===activo?' selected':''}>${esc(m.nombre)}</option>`).join('');
+  sel.onchange=()=>{ btn.disabled=sel.value===activo; msg.textContent=''; };
+  btn.onclick=async()=>{
+    btn.disabled=true; msg.textContent='Guardando…';
+    const res=await fetch('/panel/api/modelo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({modelo:sel.value})});
+    if(res.ok){ activo=sel.value; msg.textContent='✓ Cambiado. Las próximas respuestas del bot salen con este modelo.'; }
+    else{ btn.disabled=false; msg.textContent='No se pudo guardar. Probá de nuevo.'; }
+  };
+})();
+
+(async()=>{
+  const r=await fetch('/panel/api/costos');
+  if(!r.ok){ alert('No se pudieron cargar los costos.'); return; }
+  const d=await r.json();
+  const mes=d.mes, tot=d.total;
+
+  document.getElementById('tMesCosto').textContent=usd(mes.costo);
+  document.getElementById('tMesDet').textContent=`${miles(mes.mensajes)} respuestas del bot`;
+  document.getElementById('tTotCosto').textContent=usd(tot.costo);
+  document.getElementById('tTotDet').textContent=`${miles(tot.mensajes)} respuestas del bot`;
+  document.getElementById('tMesTokens').textContent=miles(Number(mes.entrada)+Number(mes.salida));
+  document.getElementById('tPromedio').textContent=tot.mensajes?usd(tot.costo/tot.mensajes):'—';
+
+  // El desglose por modelo solo aparece si conviven 2+ modelos (o sea, si se
+  // está testeando otro modelo vía MODELO_AGENTE); con uno solo no aporta nada.
+  const modelos=d.por_modelo||[];
+  if(modelos.length>1){
+    document.getElementById('cardModelos').hidden=false;
+    document.getElementById('filasModelos').innerHTML = modelos.map(m=>
+      `<tr>`+
+        `<td>${esc(m.modelo)}</td>`+
+        `<td class="num">${miles(m.mensajes)}</td>`+
+        `<td class="num">${miles(m.entrada)}</td>`+
+        `<td class="num">${miles(m.salida)}</td>`+
+        `<td class="num">${usd(m.costo)}</td>`+
+        `<td class="num">${m.mensajes?usd(m.costo/m.mensajes):'—'}</td>`+
+      `</tr>`
+    ).join('');
+  }
+
+  // --- Por cliente: buscador + de a 20 filas (con miles de charlas la tabla
+  // entera sería inmanejable). El filtro corre sobre lo que trajo la API.
+  const clientes=d.por_cliente||[];
+  const cuerpoClientes=document.getElementById('filasClientes');
+  const btnMas=document.getElementById('btnMasClientes');
+  const busca=document.getElementById('buscaCliente');
+  const DE_A=20;
+  let visibles=DE_A;
+
+  function filaCliente(c){
+    return `<tr>`+
+      `<td>${esc(nombre(c))}</td>`+
+      `<td>${esc(c.telefono||'—')}</td>`+
+      `<td class="num">${miles(c.mensajes)}</td>`+
+      `<td class="num">${miles(Number(c.entrada)+Number(c.salida))}</td>`+
+      `<td class="num">${usd(c.costo)}</td>`+
+      `<td class="muted">${fecha(c.ultimo)}</td>`+
+    `</tr>`;
+  }
+  function pintarClientes(){
+    const q=(busca.value||'').trim().toLowerCase();
+    const lista=q ? clientes.filter(c=>
+      nombre(c).toLowerCase().includes(q) || String(c.telefono||'').includes(q)
+    ) : clientes;
+    if(!lista.length){
+      cuerpoClientes.innerHTML = `<tr><td colspan="6" class="muted">${clientes.length?'Ningún cliente coincide con la búsqueda.':'Todavía no hay consumo registrado. Se empieza a medir con cada respuesta nueva del bot.'}</td></tr>`;
+      btnMas.hidden=true; return;
+    }
+    cuerpoClientes.innerHTML = lista.slice(0,visibles).map(filaCliente).join('');
+    const restan=lista.length-visibles;
+    btnMas.hidden = restan<=0;
+    if(restan>0) btnMas.textContent=`Mostrar más (${restan} restantes)`;
+  }
+  busca.oninput=()=>{ visibles=DE_A; pintarClientes(); };
+  btnMas.onclick=()=>{ visibles+=DE_A; pintarClientes(); };
+  pintarClientes();
+
+  // --- Por día: click en una fila la expande con el desglose por cliente de
+  // ese día (se pide a /api/costos/dia al abrir).
+  const dias=d.por_dia||[];
+  const cuerpoDias=document.getElementById('filasDias');
+  cuerpoDias.innerHTML = dias.length ? dias.map(x=>
+    `<tr class="diaFila" data-dia="${esc(x.dia)}" style="cursor:pointer">`+
+      `<td><span class="muted flecha">▸</span> ${dia(x.dia)}</td>`+
+      `<td class="num">${miles(x.mensajes)}</td>`+
+      `<td class="num">${miles(x.entrada)}</td>`+
+      `<td class="num">${miles(x.salida)}</td>`+
+      `<td class="num">${usd(x.costo)}</td>`+
+    `</tr>`
+  ).join('') : '<tr><td colspan="5" class="muted">Sin datos todavía.</td></tr>';
+
+  cuerpoDias.querySelectorAll('.diaFila').forEach(fila=>{
+    fila.onclick=async()=>{
+      const abierta=fila.nextElementSibling && fila.nextElementSibling.classList.contains('diaDetalle');
+      if(abierta){ fila.nextElementSibling.remove(); fila.querySelector('.flecha').textContent='▸'; return; }
+      fila.querySelector('.flecha').textContent='▾';
+      const det=document.createElement('tr');
+      det.className='diaDetalle';
+      det.innerHTML='<td colspan="5" class="muted">Cargando…</td>';
+      fila.after(det);
+      try{
+        const r=await fetch('/panel/api/costos/dia?dia='+encodeURIComponent(fila.dataset.dia));
+        if(!r.ok) throw new Error();
+        const { clientes:cs }=await r.json();
+        det.innerHTML='<td colspan="5" style="padding:4px 6px 12px 24px">'+
+          '<table style="margin:0">'+
+          '<thead><tr><th>Cliente</th><th>Teléfono</th><th class="num">Respuestas</th><th class="num">Tokens</th><th class="num">Costo</th></tr></thead>'+
+          '<tbody>'+cs.map(c=>
+            `<tr>`+
+              `<td>${esc(nombre(c))}</td>`+
+              `<td>${esc(c.telefono||'—')}</td>`+
+              `<td class="num">${miles(c.mensajes)}</td>`+
+              `<td class="num">${miles(Number(c.entrada)+Number(c.salida))}</td>`+
+              `<td class="num">${usd(c.costo)}</td>`+
+            `</tr>`).join('')+
+          '</tbody></table></td>';
+      }catch(e){
+        det.innerHTML='<td colspan="5" class="muted">No se pudo cargar el desglose. Probá de nuevo.</td>';
+      }
+    };
+  });
+})();
+</script>
+</body>
+</html>

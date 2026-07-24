@@ -1,0 +1,16 @@
+# Secretos: el .env NUNCA debe subir a Git
+.env
+
+# Dependencias de Node (se reinstalan con "npm install", no se versionan)
+node_modules/
+
+# Data que se genera en runtime (no es secreto, pero es estado local)
+contactos.json
+historial.json
+
+# Logs y basura del sistema
+*.log
+.DS_Store
+
+# Mockups del companion visual de brainstorming (estado local, no se versiona)
+.superpowers/

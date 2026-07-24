@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+  <!-- Logo placeholder: reemplazalo por el logo del cliente (mismo nombre de archivo). -->
+  <circle cx="48" cy="48" r="44" fill="currentColor" opacity="0.15"/>
+  <circle cx="48" cy="48" r="44" fill="none" stroke="currentColor" stroke-width="4"/>
+  <path d="M28 60 V38 l10 12 10-12 v22" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

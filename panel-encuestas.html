@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/assets/branding.css">
+<script src="/assets/branding.js" defer></script>
+<title>Encuestas</title>
+<style>
+  :root{--bg:#efece4;--surface:#fffdf8;--surface-2:#f7f4ec;--ink:#23211d;--muted:#827d72;
+    --line:#e7e1d4;--line-strong:#d9d2c2;
+    --ok:#137a52;--ok-soft:#e2f0e8;--mid:#9fc48f;--err:#c1502a;--err-soft:#f7e7df;--r:14px;}
+  *{box-sizing:border-box}html,body{height:100%}
+  body{font-family:system-ui,sans-serif;margin:0;color:var(--ink);background:var(--bg);height:100vh;display:flex}
+  .rail{width:190px;flex:none;background:var(--accent-ink);display:flex;flex-direction:column;overflow:auto}
+  .logo-card{margin:14px 12px 10px;background:#fff;border-radius:10px;padding:8px 10px}
+  .logo-card img{display:block;width:100%;max-width:110px;margin:0 auto}
+  .rail-label{font-size:10px;color:var(--rail-muted);letter-spacing:1.5px;margin:8px 18px 4px;text-transform:uppercase}
+  .rail a{display:flex;align-items:center;gap:10px;margin:2px 10px;padding:8px 10px;border-radius:9px;
+    text-decoration:none;color:var(--rail-muted);font-size:13px;font-weight:600}
+  .rail a svg{width:17px;height:17px;flex:none}
+  .rail a:hover{background:var(--rail-hover);color:#fff}
+  .rail a.active{background:#fff;color:var(--accent-ink)}
+  .rail-foot{margin-top:auto;padding:10px;border-top:1px solid var(--rail-line)}
+  .rail-user{display:flex;align-items:center;gap:9px;background:var(--rail-deep);border-radius:9px;padding:8px 10px}
+  .rail-user .av{width:28px;height:28px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+  .rail-user .info{flex:1;min-width:0;color:#fff}
+  .rail-user .info b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rail-user .info small{font-size:10px;color:var(--rail-muted)}
+  .rail-user form{margin:0}
+  .rail-user button{cursor:pointer;border:0;background:none;color:var(--rail-muted);padding:4px;display:grid;place-items:center}
+  .rail-user button:hover{color:#fff}
+  .wrap{flex:1;overflow:auto;padding:24px}
+  .cabecera{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  h1{font-size:20px;margin:0 0 4px}.sub{color:var(--muted);margin:0 0 14px;font-size:14px}
+  h2{font-size:15px;margin:0 0 2px}
+  .btn{cursor:pointer;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);
+    font-weight:600;padding:9px 16px;border-radius:9px;text-decoration:none;font-size:14px}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:16px}
+  .cols{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+  .cols>div{flex:1;min-width:280px}
+  label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
+  input,textarea,select{width:100%;padding:8px;border:1px solid var(--line-strong);border-radius:8px;font:inherit}
+  textarea{min-height:90px;resize:vertical}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+  .tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+  .tile .k{font-size:12px;font-weight:600;color:var(--muted)}
+  .tile .v{font-size:22px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+  .tile .d{font-size:12px;color:var(--muted);margin-top:2px}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:13px}
+  th{color:var(--muted);font-weight:600}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .muted{color:var(--muted)}
+  .vars{font-size:12px;color:var(--muted);margin-top:6px}
+  .var-row{display:flex;gap:8px;align-items:center;margin-top:6px}
+  .var-row span{font-weight:700;color:var(--accent-ink)}
+  .paso{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin:18px 0 4px}
+  .paso:first-child{margin-top:0}
+  .pnum{width:22px;height:22px;flex:none;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);
+    display:grid;place-items:center;font-size:12px;font-weight:800}
+  .btn-row{display:flex;gap:8px;align-items:center;margin-top:6px}
+  .btn-row .rotulo{flex:0 0 90px;font-size:12px;color:var(--muted);text-align:right}
+  .btn-row .tag{flex:0 0 52px;text-align:center;font-size:11px;font-weight:700;border-radius:999px;padding:2px 0}
+  .btn-row .tag.mejor{background:var(--ok-soft);color:var(--ok)}
+  .btn-row .tag.peor{background:var(--err-soft);color:var(--err)}
+  .btn-row .tag.medio{visibility:hidden}
+  .preview-mas{margin-top:6px;text-align:center;background:#fff;border-radius:7px;padding:6px;font-size:13px;color:#1273d4;font-weight:600}
+  .periodo{display:flex;gap:8px;margin-bottom:16px}
+  .periodo button{border:1px solid var(--line);background:var(--surface);color:var(--muted);
+    border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer}
+  .periodo button:hover{background:var(--surface-2);color:var(--ink)}
+  .periodo button.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+  .badge{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}
+  .badge.positiva{background:var(--ok-soft);color:var(--ok)}
+  .badge.negativa{background:var(--err-soft);color:var(--err)}
+  .estado{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--surface-2)}
+  .estado.APPROVED{background:var(--accent-soft);color:var(--accent-ink)}
+  .estado.REJECTED{background:#f7e0d8;color:#a3431f}
+  .preview{background:#dcf8c6;border-radius:10px;padding:10px 12px;font-size:14px;white-space:pre-wrap;min-height:40px}
+  .preview-botones{display:flex;gap:6px;margin-top:8px}
+  .preview-botones span{flex:1;text-align:center;background:#fff;border-radius:7px;padding:6px;font-size:13px;color:#1273d4;font-weight:600}
+  .barra{display:flex;align-items:center;gap:10px;font-size:13px;margin-bottom:8px}
+  .barra .lbl{width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .barra .pista{flex:1;background:var(--surface-2);border-radius:6px;height:12px;overflow:hidden}
+  .barra .relleno{height:12px;border-radius:6px}
+  .barra .n{width:36px;text-align:right;font-variant-numeric:tabular-nums}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<nav class="rail">
+  <div class="logo-card"><img src="/assets/logo.svg" alt=""></div>
+  <div class="rail-label">Panel</div>
+  <a href="/panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20l1.3-3.9C1.976 12.663 2.874 8.228 6.4 5.726c3.526-2.501 8.59-2.296 11.845.48 3.255 2.777 3.695 7.266 1.029 10.501-2.666 3.235-7.615 4.215-11.574 2.293z"/></svg>Conversaciones</a>
+  <a href="/panel/plantillas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 9h1"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>Plantillas</a>
+  <a href="/panel/encuestas" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17.75l-6.172 3.245 1.179-6.873-5-4.867 6.9-1L12 2l3.093 6.255 6.9 1-5 4.867 1.179 6.873z"/></svg>Encuestas</a>
+  <a href="/panel/envio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14L21 3"/><path d="M21 3l-6.5 18a.55.55 0 0 1-1 0l-3.5-7-7-3.5a.55.55 0 0 1 0-1z"/></svg>Envío</a>
+  <a href="/panel/historial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><path d="M9 12h.01"/><path d="M13 12h2"/><path d="M9 16h.01"/><path d="M13 16h2"/></svg>Historial</a>
+  <a href="/panel/metricas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="6" height="8" rx="1"/><rect x="9" y="8" width="6" height="12" rx="1"/><rect x="15" y="4" width="6" height="16" rx="1"/></svg>Métricas</a>
+  <a href="/panel/costos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A2 2 0 0 0 13 8h-2a2 2 0 1 0 0 4h2a2 2 0 1 1 0 4h-2a2 2 0 0 1-1.8-1"/><path d="M12 7v10"/></svg>Costos</a>
+  <div class="rail-foot">
+  <div class="rail-user">
+    <span class="av" id="railAv">·</span>
+    <div class="info"><b id="railYo">…</b><small>Conectado</small></div>
+    <form method="post" action="/panel/logout"><button type="submit" title="Cerrar sesión" aria-label="Cerrar sesión"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2"/><path d="M9 12h12l-3-3m0 6 3-3"/></svg></button></form>
+  </div>
+  </div>
+</nav>
+<script>
+fetch('/panel/api/yo').then(r=>r.json()).then(d=>{
+  const u=(d&&d.usuario)||'—';
+  document.getElementById('railYo').textContent=u;
+  document.getElementById('railAv').textContent=(u[0]||'·').toUpperCase();
+}).catch(()=>{});
+</script>
+<div class="wrap">
+  <div class="cabecera">
+    <div>
+      <h1>Encuestas</h1>
+      <p class="sub">Satisfacción de los clientes después del service.</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" id="btnNueva" onclick="toggleForm()">✏️ Nueva encuesta</button>
+      <a class="btn primary hidden" id="btnEnviar" href="#">📤 Enviar encuesta</a>
+    </div>
+  </div>
+
+  <div class="card hidden" id="estadoCard">
+    <h2 id="estadoTitulo"></h2>
+    <p class="muted" id="estadoTexto" style="font-size:13px;margin:6px 0 0"></p>
+  </div>
+
+  <div class="card hidden" id="formCard">
+    <h2 style="margin-bottom:4px">Crear encuesta</h2>
+    <p class="muted" style="font-size:13px;margin:0 0 14px">Tres pasos: el nombre, el mensaje y las opciones de respuesta. A la derecha ves cómo le llega al cliente.</p>
+    <div class="cols">
+      <div>
+        <div class="paso"><span class="pnum">1</span> Nombre interno</div>
+        <input id="fNombre" placeholder="encuesta_service" oninput="normalizarNombre()">
+        <div class="vars">Es solo para identificarla (el cliente no lo ve). Escribilo como quieras: lo convertimos solo.</div>
+
+        <div class="paso"><span class="pnum">2</span> Mensaje</div>
+        <textarea id="fCuerpo" oninput="refrescar()" placeholder="Hola {{1}}! ¿Cómo fue tu experiencia en el service de tu {{2}}?"></textarea>
+        <div class="vars">Con <button class="btn" type="button" onclick="insertarVar()" style="margin:0;padding:1px 8px;font-size:12px">+ variable</button> insertás datos del cliente (nombre, apellido, etc.) que se completan solos al enviar.</div>
+        <div id="fMapeo"></div>
+
+        <div class="paso"><span class="pnum">3</span> Opciones de respuesta</div>
+        <label style="margin-top:6px">¿Cuántas opciones querés?</label>
+        <select id="fCant" onchange="renderBotones()" style="width:auto">
+          <option value="2">2 opciones</option>
+          <option value="3" selected>3 opciones</option>
+          <option value="4">4 opciones</option>
+          <option value="5">5 opciones</option>
+        </select>
+        <div id="fBotones"></div>
+        <div class="vars" id="fBotonesHint"></div>
+
+        <button class="btn primary" style="margin-top:16px" onclick="crearEncuesta()">Crear y mandar a revisión</button>
+        <div id="fMsg" style="margin-top:8px;font-size:13px"></div>
+      </div>
+      <div>
+        <label style="margin-top:0">Así le llega al cliente</label>
+        <div class="preview"><span id="fPreview">Tu mensaje aparece acá…</span><div id="fPreviewBtns"></div></div>
+        <div class="vars">Se envía como plantilla UTILITY de WhatsApp. Meta la revisa antes de habilitarla (queda PENDING hasta la aprobación).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="periodo">
+    <button id="btn7" onclick="cargar(7)">7 días</button>
+    <button id="btn30" class="active" onclick="cargar(30)">30 días</button>
+  </div>
+
+  <div class="tiles">
+    <div class="tile"><div class="k">CSAT</div><div class="v" id="tCsat">—</div><div class="d">respuestas positivas (todas menos la última opción)</div></div>
+    <div class="tile"><div class="k">Tasa de respuesta</div><div class="v" id="tTasa">—</div><div class="d" id="dTasa">respondieron sobre enviadas</div></div>
+    <div class="tile"><div class="k">Respuestas</div><div class="v" id="tTotal">—</div><div class="d">en el período</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Cómo respondieron</h2>
+    <div id="barras" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Por campaña</h2>
+    <p class="muted" style="font-size:12px;margin:2px 0 0">Últimas 20 campañas de encuesta (sin filtro de período: una campaña vieja puede seguir sumando respuestas).</p>
+    <table>
+      <thead><tr><th>Campaña</th><th class="num">Enviadas</th><th class="num">Respondieron</th><th class="num">Tasa</th><th class="num">CSAT</th></tr></thead>
+      <tbody id="filasCampanias"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Últimas respuestas</h2>
+    <table>
+      <thead><tr><th>Cliente</th><th>Respuesta</th><th>Fecha</th></tr></thead>
+      <tbody id="filasUltimas"></tbody>
+    </table>
+  </div>
+</div>
+<script>
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function miles(x){ return Number(x||0).toLocaleString('es-AR'); }
+function pct(x){ return x==null?'—':x+'%'; }
+function fecha(x){ try{ return new Date(x).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'}); }catch(e){ return x||'—'; } }
+function fechaCorta(x){ try{ return new Date(x).toLocaleDateString('es-AR',{dateStyle:'short'}); }catch(e){ return x||'—'; } }
+
+let ACTIVA=null;       // {nombre, estado} de la encuesta vigente (o null)
+let BOTONES=[];        // botones de la activa (para colorear respuestas)
+
+// ---------- Formulario (mismo patrón que el creador de Plantillas) ----------
+const CAMPOS=['nombre','apellido','correo'];
+const seleccion={};
+function numVars(){ return new Set([...document.getElementById('fCuerpo').value.matchAll(/\{\{(\d+)\}\}/g)].map(m=>+m[1])); }
+function insertarVar(){ const ta=document.getElementById('fCuerpo'); ta.value+=`{{${numVars().size+1}}}`; refrescar(); }
+function variablesActuales(){ return [...numVars()].sort((a,b)=>a-b).map(n=>({n, campo: seleccion[n]||'nombre'})); }
+function elegir(n,campo){ seleccion[n]=campo; actualizarPreview(); }
+function refrescar(){
+  const nums=[...numVars()].sort((a,b)=>a-b);
+  nums.forEach(n=>{ if(!seleccion[n]) seleccion[n]='nombre'; });
+  document.getElementById('fMapeo').innerHTML = nums.length
+    ? '<div class="vars">¿Qué dato del cliente llena cada variable?</div>'+nums.map(n=>
+        `<div class="var-row"><span>{{${n}}}</span> → <select onchange="elegir(${n}, this.value)">`+
+        CAMPOS.map(c=>`<option value="${c}"${c===seleccion[n]?' selected':''}>${c}</option>`).join('')+`</select></div>`
+      ).join('')
+    : '';
+  actualizarPreview();
+}
+// Sugerencias para precargar según la cantidad elegida (siempre de mejor a peor).
+const SUGERIDOS={
+  2:['Bien','Mal'],
+  3:['Excelente','Buena','Mala'],
+  4:['Excelente','Buena','Regular','Mala'],
+  5:['Excelente','Muy buena','Buena','Regular','Mala'],
+};
+// Redibuja los inputs de botones. Si el usuario no tocó las sugerencias,
+// al cambiar la cantidad se precargan las de la nueva cantidad; si editó
+// alguna, se conserva lo escrito y solo se completan las que falten.
+let cantAnterior=3;
+function renderBotones(){
+  const cant=+document.getElementById('fCant').value;
+  let actuales=[...document.querySelectorAll('#fBotones input')].map(i=>i.value);
+  const sinEditar=JSON.stringify(actuales)===JSON.stringify(SUGERIDOS[cantAnterior]||[]);
+  if(sinEditar) actuales=[];
+  cantAnterior=cant;
+  const base=SUGERIDOS[cant]||SUGERIDOS[3];
+  document.getElementById('fBotones').innerHTML=Array.from({length:cant},(_,i)=>{
+    const val=actuales[i]!==undefined&&actuales[i]!==''?actuales[i]:base[i]||'';
+    const tag=i===0?'<span class="tag mejor">MEJOR</span>':(i===cant-1?'<span class="tag peor">PEOR</span>':'<span class="tag medio">·</span>');
+    return `<div class="btn-row"><span class="rotulo">Opción ${i+1}</span>`+
+      `<input maxlength="25" value="${esc(val)}" oninput="actualizarPreview()">${tag}</div>`;
+  }).join('');
+  document.getElementById('fBotonesHint').innerHTML = cant>3
+    ? '⚠️ Con más de 3, WhatsApp muestra las primeras y el resto queda detrás de "Ver todas las opciones" (un toque más para el cliente). La <b>última siempre cuenta como respuesta negativa</b> para el CSAT.'
+    : 'Ordenalas de mejor a peor: la <b>última cuenta como respuesta negativa</b> para el CSAT. Máx. 25 caracteres por opción.';
+  actualizarPreview();
+}
+function botonesForm(){
+  return [...document.querySelectorAll('#fBotones input')].map(i=>i.value.trim()).filter(Boolean);
+}
+function actualizarPreview(){
+  const ej={nombre:'Carlos',apellido:'Rivarola',correo:'carlos@ejemplo.com'};
+  let txt=document.getElementById('fCuerpo').value;
+  variablesActuales().forEach(v=>{ txt=txt.replaceAll(`{{${v.n}}}`, ej[v.campo]||''); });
+  document.getElementById('fPreview').textContent = txt || 'Tu mensaje aparece acá…';
+  const btns=botonesForm();
+  const visibles=btns.slice(0,3);
+  document.getElementById('fPreviewBtns').innerHTML =
+    (visibles.length?`<div class="preview-botones">${visibles.map(b=>`<span>${esc(b)}</span>`).join('')}</div>`:'')+
+    (btns.length>3?`<div class="preview-mas">☰ Ver todas las opciones (${btns.length})</div>`:'');
+}
+function slugNombre(s, strip){
+  let v=String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/[^a-z0-9_]+/g,'_').replace(/_+/g,'_');
+  if(strip) v=v.replace(/^_+|_+$/g,'');
+  return v;
+}
+function normalizarNombre(){
+  const inp=document.getElementById('fNombre');
+  const pos=inp.selectionStart;
+  inp.value=slugNombre(inp.value, false);
+  const p=Math.min(pos, inp.value.length);
+  inp.setSelectionRange(p, p);
+}
+function toggleForm(){ document.getElementById('formCard').classList.toggle('hidden'); }
+
+async function crearEncuesta(){
+  const msg=document.getElementById('fMsg');
+  const nombre=slugNombre(document.getElementById('fNombre').value, true);
+  const cuerpo=document.getElementById('fCuerpo').value.trim();
+  const botones=botonesForm();
+  if(!nombre){ msg.style.color='#a3431f'; msg.textContent='❌ Poné un nombre interno (ej: encuesta_service).'; return; }
+  if(!cuerpo){ msg.style.color='#a3431f'; msg.textContent='❌ Escribí el mensaje de la encuesta.'; return; }
+  if(botones.length<2){ msg.style.color='#a3431f'; msg.textContent='❌ La encuesta necesita al menos 2 botones.'; return; }
+  msg.style.color=''; msg.textContent='Enviando a Meta…';
+  const r=await fetch('/panel/api/plantillas',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({nombre, idioma:'es_AR', categoria:'UTILITY', cuerpo,
+      variables:variablesActuales(), botones, es_encuesta:true})});
+  const d=await r.json();
+  if(r.ok){ msg.style.color='#0c5238'; msg.textContent='✅ Creada. Queda PENDING hasta que Meta la apruebe.';
+    document.getElementById('formCard').classList.add('hidden'); estadoSetup(); }
+  else { msg.style.color='#a3431f'; msg.textContent='❌ '+(d.error||'')+' '+JSON.stringify(d.detalle||''); }
+}
+
+// ---------- Estado de la encuesta activa ----------
+async function estadoSetup(){
+  const r=await fetch('/panel/api/plantillas');
+  if(!r.ok) return;
+  const d=await r.json();
+  const p=(d.plantillas||[]).find(x=>x.es_encuesta); // la lista viene id DESC → la más nueva
+  ACTIVA=p||null;
+  BOTONES=p?(Array.isArray(p.botones)?p.botones:JSON.parse(p.botones||'[]')):[];
+  const card=document.getElementById('estadoCard');
+  const btnEnviar=document.getElementById('btnEnviar');
+  if(!p){
+    card.classList.add('hidden');
+    btnEnviar.classList.add('hidden');
+    document.getElementById('formCard').classList.remove('hidden'); // sin encuesta: form abierto
+  } else if(p.estado!=='APPROVED'){
+    card.classList.remove('hidden');
+    btnEnviar.classList.add('hidden');
+    document.getElementById('estadoTitulo').innerHTML='Encuesta "'+esc(p.nombre)+'" en revisión de Meta <span class="estado '+esc(p.estado)+'">'+esc(p.estado)+'</span>';
+    document.getElementById('estadoTexto').textContent='Cuando Meta la apruebe ya se puede enviar. Podés chequearlo con "Actualizar estado" en la solapa Plantillas.';
+  } else {
+    card.classList.add('hidden');
+    btnEnviar.classList.remove('hidden');
+    btnEnviar.href='/panel/envio?plantilla='+encodeURIComponent(p.nombre);
+  }
+}
+
+// ---------- Métricas ----------
+const PALETA=['var(--ok)','var(--mid)','#d3d1c7'];
+function colorOpcion(i, total){ return i===total-1 ? 'var(--err)' : (PALETA[i]||'var(--mid)'); }
+
+async function cargar(dias){
+  document.getElementById('btn7').classList.toggle('active', dias===7);
+  document.getElementById('btn30').classList.toggle('active', dias===30);
+
+  const r=await fetch('/panel/api/encuestas?dias='+dias);
+  if(!r.ok){ alert('No se pudieron cargar las encuestas.'); return; }
+  const d=await r.json();
+
+  document.getElementById('tCsat').textContent=pct(d.csat);
+  document.getElementById('tTasa').textContent=pct(d.tasaRespuesta);
+  document.getElementById('dTasa').textContent=miles(d.total)+' de '+miles(d.enviadas)+' enviadas';
+  document.getElementById('tTotal').textContent=miles(d.total);
+
+  const porOpcion=d.porOpcion||[];
+  const max=Math.max(1, ...porOpcion.map(o=>o.n));
+  document.getElementById('barras').innerHTML = porOpcion.length ? porOpcion.map((o,i)=>
+    `<div class="barra">`+
+      `<span class="lbl">${esc(o.respuesta)}</span>`+
+      `<div class="pista"><div class="relleno" style="width:${Math.round(o.n/max*100)}%;background:${colorOpcion(i,porOpcion.length)}"></div></div>`+
+      `<span class="n">${miles(o.n)}</span>`+
+    `</div>`
+  ).join('') : '<div class="muted" style="font-size:13px">Creá la encuesta para ver el detalle por opción.</div>';
+
+  const camps=d.porCampania||[];
+  document.getElementById('filasCampanias').innerHTML = camps.length ? camps.map(c=>
+    `<tr>`+
+      `<td>#${c.id} · ${esc(fechaCorta(c.creada))}</td>`+
+      `<td class="num">${miles(c.enviadas)}</td>`+
+      `<td class="num">${miles(c.respondieron)}</td>`+
+      `<td class="num">${pct(c.tasa)}</td>`+
+      `<td class="num">${pct(c.csat)}</td>`+
+    `</tr>`
+  ).join('') : '<tr><td colspan="5" class="muted">Todavía no se enviaron campañas de encuesta.</td></tr>';
+
+  const ultimas=d.ultimas||[];
+  document.getElementById('filasUltimas').innerHTML = ultimas.length ? ultimas.map(x=>{
+    const negativa = BOTONES.length && x.respuesta===BOTONES[BOTONES.length-1];
+    return `<tr>`+
+      `<td>${esc(x.cliente||x.telefono)}</td>`+
+      `<td><span class="badge ${negativa?'negativa':'positiva'}">${esc(x.respuesta)}</span></td>`+
+      `<td class="muted">${esc(fecha(x.creado))}</td>`+
+    `</tr>`;
+  }).join('') : '<tr><td colspan="3" class="muted">Sin respuestas en el período.</td></tr>';
+}
+
+async function iniciar(){ await estadoSetup(); cargar(30); renderBotones(); refrescar(); }
+iniciar();
+</script>
+</body>
+</html>
