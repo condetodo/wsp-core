@@ -76,8 +76,17 @@ async function avisarLeadPorMail(destinos, datos) {
     return { avisados: 0 };
   }
 
-  const { Resend } = require('resend');
-  const resend = new Resend(process.env.RESEND_API_KEY);
+  // Carga perezosa y defensiva: si el paquete no está instalado (npm install a
+  // medias, deploy raro), el aviso se pierde pero el bot no se cae.
+  let resend;
+  try {
+    const { Resend } = require('resend');
+    resend = new Resend(process.env.RESEND_API_KEY);
+  } catch (err) {
+    console.error('❌ No se pudo inicializar Resend:', err.message);
+    return { avisados: 0 };
+  }
+
   const { asunto, html } = renderAvisoLead(datos);
 
   let avisados = 0;
