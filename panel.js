@@ -72,7 +72,7 @@ router.get('/login', (req, res) => {
       body{
         font-family:'Hanken Grotesk',system-ui,sans-serif;margin:0;color:var(--ink);
         background:
-          radial-gradient(1200px 500px at 85% -10%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 60%),
+          radial-gradient(1200px 500px at 85% -10%, rgba(19,122,82,.07), transparent 60%),
           radial-gradient(900px 500px at -5% 110%, rgba(193,80,42,.06), transparent 55%),
           var(--bg);
         min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;

@@ -34,7 +34,7 @@
     font-family:'Hanken Grotesk',system-ui,sans-serif;
     margin:0;color:var(--ink);
     background:
-      radial-gradient(1200px 500px at 85% -10%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 60%),
+      radial-gradient(1200px 500px at 85% -10%, rgba(19,122,82,.07), transparent 60%),
       radial-gradient(900px 500px at -5% 110%, rgba(193,80,42,.06), transparent 55%),
       var(--bg);
     height:100vh;display:flex;flex-direction:column;
@@ -112,7 +112,7 @@
   }
   @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .item:hover{background:var(--surface-2)}
-  .item.sel{background:var(--accent-soft);border-color:color-mix(in srgb, var(--accent) 35%, white)}
+  .item.sel{background:var(--accent-soft);border-color:#bfe0cf}
   .item.sel .name{color:var(--accent-ink)}
   .av{
     width:38px;height:38px;flex:none;border-radius:11px;display:grid;place-items:center;
