@@ -16,6 +16,7 @@
 // ============================================================
 const { pool } = require('./db');
 const clientes = require('./clientes');
+const propiedades = require('./cliente/propiedades');
 
 // ------------------------------------------------------------
 // DEFINICIONES (el menú de tools que ve Claude).
@@ -28,6 +29,36 @@ const DEFINICIONES = [
       'Consulta los datos reales del negocio: horarios, dirección y contacto. ' +
       'Usala SIEMPRE que el cliente pregunte por esos datos, en vez de inventar.',
     input_schema: { type: 'object', properties: {}, required: [] }
+  },
+  {
+    name: 'buscar_propiedades',
+    description:
+      'Busca en el inventario real de la inmobiliaria las propiedades disponibles. ' +
+      'Usala SIEMPRE que el cliente pregunte por algo para alquilar o comprar, en vez de inventar. ' +
+      'Pasá solo los criterios que el cliente haya dicho; no completes los demás. ' +
+      'IMPORTANTE: si el cliente da un presupuesto, preguntale primero si es en pesos o en dólares. ' +
+      'Sin la moneda el tope se ignora y le podrías ofrecer algo carísimo.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        operacion: {
+          type: 'string', enum: ['venta', 'alquiler'],
+          description: 'Si el cliente quiere comprar o alquilar.'
+        },
+        tipo: {
+          type: 'string', enum: ['casa', 'departamento', 'ph', 'lote', 'local', 'oficina'],
+          description: 'Tipo de propiedad.'
+        },
+        zona: { type: 'string', description: 'Barrio o localidad que pidió el cliente.' },
+        ambientes: { type: 'integer', description: 'Cantidad exacta de ambientes.' },
+        precio_max: { type: 'number', description: 'Tope de presupuesto. Requiere moneda.' },
+        moneda: {
+          type: 'string', enum: ['USD', 'ARS'],
+          description: 'Moneda del presupuesto: USD para dólares, ARS para pesos.'
+        }
+      },
+      required: []
+    }
   },
   {
     name: 'guardar_datos_cliente',
@@ -79,6 +110,9 @@ const DEFINICIONES = [
 async function ejecutar(nombre, input, contexto = {}) {
   if (nombre === 'consultar_info_negocio') {
     return await consultarInfoNegocio();
+  }
+  if (nombre === 'buscar_propiedades') {
+    return await propiedades.buscar(pool, input);
   }
   if (nombre === 'guardar_datos_cliente') {
     return await clientes.actualizarPersona(contexto.numero, input);
