@@ -121,6 +121,15 @@
   }
   .item-main{min-width:0;flex:1}
   .name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Calificación del lead: cuanto más caliente, más fuerte el color. */
+  .lead{display:inline-block;margin-left:6px;border-radius:999px;padding:1px 7px;
+    font-size:11px;font-weight:700;vertical-align:middle;background:var(--surface-2);color:var(--muted)}
+  .lead.p4{background:#fbe9df;color:#b8501f}
+  .lead.p5{background:#c1502a;color:#fff}
+  .umbral{display:flex;align-items:center;gap:6px;padding:8px 14px;font-size:12px;color:var(--muted);
+    border-bottom:1px solid var(--line)}
+  .umbral select{font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:var(--surface-2);
+    border:1px solid var(--line-strong);border-radius:7px;padding:2px 6px;cursor:pointer}
   .sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
   .sub.mine{color:var(--accent);font-weight:600}
   .take{
@@ -302,6 +311,8 @@
 let actual = null;        // número del cliente abierto
 let yo = null;            // mi usuario
 let prevEspera = 0;       // para detectar nuevos en espera
+let umbralLead = 4;       // puntaje desde el que se avisa (se lee de config)
+fetch('/panel/api/umbral-lead').then(r=>r.json()).then(d=>{ if(d.umbral) umbralLead = d.umbral; });
 const nombres = {};       // numero -> nombre (para el encabezado del chat)
 const subs = {};          // numero -> subtítulo de estado
 const estados = {};       // numero -> 'bot' | 'en_espera' | 'en_atencion'
@@ -338,6 +349,25 @@ async function cargarLista(){
   document.getElementById('yo').textContent = yo || '';
   document.getElementById('yo-av').textContent = iniciales(yo);
 
+  // Umbral de aviso: a partir de qué puntaje se manda el mail a los vendedores.
+  // Vive en la tabla config, así que cambiarlo no necesita deploy.
+  window.guardarUmbral = async function(valor){
+    umbralLead = Number(valor);
+    await fetch('/panel/api/umbral-lead', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ umbral: umbralLead })
+    });
+  };
+
+  // Chapita con el puntaje del lead. El title deja a mano el motivo y el
+  // interés, que es lo que el vendedor necesita antes de llamar.
+  window.leadHTML = function(lead){
+    if(!lead || !lead.puntaje) return '';
+    const detalle = [lead.motivo, lead.interes].filter(Boolean).join(' · ');
+    return '<span class="lead p'+lead.puntaje+'" title="'+escapeHtml(detalle)+'">'+
+      (lead.puntaje>=4?'🔥 ':'')+lead.puntaje+'/5</span>';
+  };
+
   const espera = data.clientes.filter(c=>c.estado==='en_espera');
   const atencion = data.clientes.filter(c=>c.estado==='en_atencion');
   const bot = data.bot || [];
@@ -349,6 +379,12 @@ async function cargarLista(){
   prevEspera = espera.length;
 
   const html = [];
+  html.push(
+    '<div class="umbral">Avisar por mail desde ' +
+    '<select id="selUmbral" onchange="guardarUmbral(this.value)">' +
+      [1,2,3,4,5].map(n=>'<option value="'+n+'"'+(n===umbralLead?' selected':'')+'>'+n+'/5</option>').join('') +
+    '</select></div>'
+  );
   html.push('<div class="group"><span class="gdot wait"></span><h2>En espera</h2><span class="count">'+espera.length+'</span></div>');
   if(!espera.length) html.push('<div class="empty-line">Nadie esperando ahora mismo.</div>');
   espera.forEach((c,i)=>{
@@ -356,7 +392,7 @@ async function cargarLista(){
     html.push(
       '<div class="item'+(c.numero===actual?' sel':'')+'" style="animation-delay:'+(i*30)+'ms" onclick="abrir(\''+c.numero+'\')">'+
         avatarHTML(c.nombre)+
-        '<div class="item-main"><div class="name">'+escapeHtml(c.nombre)+'</div><div class="sub">Toca para ver · o tomá el caso</div></div>'+
+        '<div class="item-main"><div class="name">'+escapeHtml(c.nombre)+leadHTML(c.lead)+'</div><div class="sub">Toca para ver · o tomá el caso</div></div>'+
         '<button class="take" onclick="event.stopPropagation();tomarCliente(\''+c.numero+'\')">Tomar</button>'+
       '</div>'
     );
@@ -371,7 +407,7 @@ async function cargarLista(){
     html.push(
       '<div class="item'+(c.numero===actual?' sel':'')+'" style="animation-delay:'+(i*30)+'ms" onclick="abrir(\''+c.numero+'\')">'+
         avatarHTML(c.nombre)+
-        '<div class="item-main"><div class="name">'+escapeHtml(c.nombre)+'</div><div class="sub'+(mio?' mine':'')+'">'+escapeHtml(quien)+'</div></div>'+
+        '<div class="item-main"><div class="name">'+escapeHtml(c.nombre)+leadHTML(c.lead)+'</div><div class="sub'+(mio?' mine':'')+'">'+escapeHtml(quien)+'</div></div>'+
       '</div>'
     );
   });
@@ -383,7 +419,7 @@ async function cargarLista(){
     html.push(
       '<div class="item'+(c.numero===actual?' sel':'')+'" style="animation-delay:'+(i*30)+'ms" onclick="abrir(\''+c.numero+'\')">'+
         avatarHTML(c.nombre)+
-        '<div class="item-main"><div class="name">'+escapeHtml(c.nombre)+'</div><div class="sub">🤖 '+hace(c.ultimo_mensaje)+'</div></div>'+
+        '<div class="item-main"><div class="name">'+escapeHtml(c.nombre)+leadHTML(c.lead)+'</div><div class="sub">🤖 '+hace(c.ultimo_mensaje)+'</div></div>'+
         '<button class="take bot" onclick="event.stopPropagation();intervenirCliente(\''+c.numero+'\')">Intervenir</button>'+
       '</div>'
     );

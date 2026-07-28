@@ -22,6 +22,7 @@ const { resolverCaso, mejorEsfuerzo } = require('./casos');
 const { resumenMetricas } = require('./metricas');
 const { resumenPanelEncuestas, registrarTemplateEncuesta } = require('./encuestas');
 const propiedades = require('./cliente/propiedades');
+const leads = require('./leads');
 const { pool } = require('./db');
 
 const router = express.Router();
@@ -185,20 +186,30 @@ router.get('/api/yo', (req, res) => {
 // Lista de derivados con su estado y nombre mostrable.
 router.get('/api/clientes', async (req, res) => {
   try {
-    const [filas, enBot] = await Promise.all([listarDerivados(), listarEnBot()]);
+    const [filas, enBot, calificaciones] = await Promise.all([
+      listarDerivados(), listarEnBot(), leads.ultimasPorPersona(),
+    ]);
+    // Calificación del lead, para que el vendedor sepa a quién llamar primero.
+    const califDe = (tel) => {
+      const c = calificaciones.get(tel);
+      return c ? { puntaje: c.puntaje, motivo: c.motivo, interes: c.interes } : null;
+    };
     const clientes = filas.map((p) => ({
       numero: p.telefono,
       nombre: [p.nombre, p.apellido].filter(Boolean).join(' ') || p.telefono,
       estado: estadoAsignacion(p),
       atendido_por: p.atendido_por || null,
+      lead: califDe(p.telefono),
     }));
     // Conversaciones que maneja el bot (últimas 24 hs): el panel las muestra
-    // en solo lectura, con la opción de intervenir.
+    // en solo lectura, con la opción de intervenir. Ordenadas por calificación
+    // primero: el punto de todo esto es que el vendedor vea al caliente arriba.
     const bot = enBot.map((p) => ({
       numero: p.telefono,
       nombre: [p.nombre, p.apellido].filter(Boolean).join(' ') || p.telefono,
       ultimo_mensaje: p.ultimo_mensaje != null ? Number(p.ultimo_mensaje) : null,
-    }));
+      lead: califDe(p.telefono),
+    })).sort((a, b) => (b.lead ? b.lead.puntaje : 0) - (a.lead ? a.lead.puntaje : 0));
     res.json({ clientes, bot, yo: req.session.usuario });
   } catch (err) {
     console.error('❌ /api/clientes:', err.message);
@@ -535,6 +546,34 @@ router.get('/api/metricas', async (req, res) => {
     res.json(await resumenMetricas(req.query.dias));
   } catch (err) {
     console.error('❌ /api/metricas:', err.message);
+    res.status(500).json({ error: 'error_interno' });
+  }
+});
+
+// --- API Umbral de leads -----------------------------------------------------
+
+// A partir de qué puntaje se avisa a los vendedores. Vive en la tabla config,
+// así que se cambia sin deploy.
+router.get('/api/umbral-lead', async (req, res) => {
+  try {
+    res.json({ umbral: await leads.umbralActivo(), default: leads.UMBRAL_DEFAULT });
+  } catch (err) {
+    console.error('❌ /api/umbral-lead:', err.message);
+    res.status(500).json({ error: 'error_interno' });
+  }
+});
+
+router.post('/api/umbral-lead', async (req, res) => {
+  const umbral = Number((req.body || {}).umbral);
+  if (!Number.isInteger(umbral) || umbral < 1 || umbral > 5) {
+    return res.status(400).json({ error: 'umbral_invalido' });
+  }
+  try {
+    await guardarConfig('umbral_lead', String(umbral));
+    console.log(`🔥 Umbral de aviso de leads cambiado a ${umbral} (desde el panel)`);
+    res.json({ ok: true, umbral });
+  } catch (err) {
+    console.error('❌ POST /api/umbral-lead:', err.message);
     res.status(500).json({ error: 'error_interno' });
   }
 });
