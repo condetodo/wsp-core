@@ -282,6 +282,26 @@ async function init() {
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_encuestas_creado ON encuestas (creado);`);
 
+  // --- Calificación de leads -------------------------------------------------
+  // Una fila por vez que el agente puntúa al cliente. Es HISTORIAL, no un valor
+  // único en personas: importa poder ver que el lead pasó de 2 a 5, porque esa
+  // subida es justamente lo que dispara un aviso aunque ya se haya avisado.
+  // `avisado` marca las que efectivamente notificaron, que es contra las que se
+  // mide el anti-repetición (ver leads.debeAvisar).
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS calificaciones (
+      id         BIGSERIAL PRIMARY KEY,
+      persona_id BIGINT NOT NULL REFERENCES personas(id),
+      puntaje    SMALLINT NOT NULL,
+      motivo     TEXT,
+      interes    TEXT,
+      avisado    BOOLEAN NOT NULL DEFAULT false,
+      creado     TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_calificaciones_persona
+    ON calificaciones (persona_id, creado DESC);`);
+
   // Tablas del VERTICAL del negocio (definidas por cliente, ver cliente/schema.js).
   await require('./cliente/schema').init(pool);
 

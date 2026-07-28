@@ -51,3 +51,24 @@ test('una tool desconocida no rompe: se lo decimos al modelo', async () => {
   const r = await ejecutar('tool_que_no_existe', {});
   assert.match(r.error, /desconocida/);
 });
+
+test('calificar_lead está y define los cinco niveles en su descripción', () => {
+  // Los criterios viven en la descripción de la tool, que es lo que ve el
+  // modelo. Si se pierden, el puntaje se vuelve arbitrario y el umbral deja
+  // de significar algo.
+  const d = DEFINICIONES.find((x) => x.name === 'calificar_lead');
+  assert.ok(d, 'falta la tool calificar_lead');
+  for (const nivel of ['1 =', '2 =', '3 =', '4 =', '5 =']) {
+    assert.ok(d.description.includes(nivel), `falta el criterio ${nivel}`);
+  }
+  assert.deepStrictEqual(d.input_schema.required, ['puntaje', 'motivo']);
+});
+
+test('calificar_lead con puntaje fuera de rango no explota', async () => {
+  // El modelo puede mandar 0, 9 o basura. No queremos que rompa la charla.
+  for (const puntaje of [0, 9, 'cinco', null]) {
+    const r = await ejecutar('calificar_lead', { puntaje, motivo: 'x' });
+    assert.strictEqual(r.ok, false, `puntaje ${puntaje} deberia rechazarse`);
+    assert.strictEqual(r.motivo, 'puntaje_invalido');
+  }
+});

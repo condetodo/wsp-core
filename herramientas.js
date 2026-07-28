@@ -17,6 +17,7 @@
 const { pool } = require('./db');
 const clientes = require('./clientes');
 const propiedades = require('./cliente/propiedades');
+const leads = require('./leads');
 
 // ------------------------------------------------------------
 // DEFINICIONES (el menú de tools que ve Claude).
@@ -78,6 +79,27 @@ const DEFINICIONES = [
     }
   },
   {
+    name: 'calificar_lead',
+    description:
+      'Registrá qué tan cerca está el cliente de comprar o alquilar. Llamala cuando aparezca ' +
+      'una señal NUEVA, no en cada mensaje, y nunca le anuncies al cliente que lo estás calificando. ' +
+      'Criterios: ' +
+      '1 = curiosea, no definió nada; ' +
+      '2 = pregunta por una propiedad puntual; ' +
+      '3 = da criterios concretos (zona, presupuesto, plazo); ' +
+      '4 = pide ver una propiedad, deja datos de contacto o habla de forma de pago; ' +
+      '5 = pide hablar con un vendedor o dice que quiere avanzar ya.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        puntaje: { type: 'integer', description: 'Del 1 al 5, según los criterios de arriba.' },
+        motivo: { type: 'string', description: 'La señal concreta que viste, en una frase corta.' },
+        interes: { type: 'string', description: 'Qué busca: operación, tipo, zona y presupuesto si los dijo.' }
+      },
+      required: ['puntaje', 'motivo']
+    }
+  },
+  {
     name: 'cerrar_conversacion',
     description:
       'Marcá la conversación como terminada cuando el cliente se despide o ya no ' +
@@ -116,6 +138,9 @@ async function ejecutar(nombre, input, contexto = {}) {
   }
   if (nombre === 'guardar_datos_cliente') {
     return await clientes.actualizarPersona(contexto.numero, input);
+  }
+  if (nombre === 'calificar_lead') {
+    return await leads.calificar(contexto.numero, input);
   }
   if (nombre === 'cerrar_conversacion') {
     // No resumimos acá (el mensaje final del agente todavía no está guardado);
