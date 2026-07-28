@@ -48,9 +48,17 @@ async function listarConWhatsapp() {
   return rows;
 }
 
+// Asesores activos con mail cargado (para el aviso de leads calificados).
+async function listarConEmail() {
+  const { rows } = await pool.query(
+    "SELECT usuario, nombre, email FROM asesores WHERE activo = true AND email IS NOT NULL AND email <> ''"
+  );
+  return rows;
+}
+
 // ¿La sesión tiene un asesor logueado? PURA (guard de las rutas del panel).
 function sesionValida(session) {
   return Boolean(session && session.usuario);
 }
 
-module.exports = { crearAsesor, buscarPorUsuario, verificar, listarConWhatsapp, sesionValida };
+module.exports = { crearAsesor, buscarPorUsuario, verificar, listarConWhatsapp, listarConEmail, sesionValida };

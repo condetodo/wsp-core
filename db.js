@@ -79,6 +79,9 @@ async function init() {
     );
   `);
 
+  // Mail del asesor: destinatario del aviso de leads calificados (ver avisos.js).
+  await pool.query(`ALTER TABLE asesores ADD COLUMN IF NOT EXISTS email TEXT;`);
+
   // Quién atiende a cada cliente derivado (null = en espera, nadie lo tomó).
   await pool.query(`ALTER TABLE personas ADD COLUMN IF NOT EXISTS atendido_por TEXT;`);
   await pool.query(`ALTER TABLE personas ADD COLUMN IF NOT EXISTS atendido_desde TIMESTAMPTZ;`);
