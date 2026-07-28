@@ -7,8 +7,8 @@
    El resto de los tonos (fondos suaves, rail lateral) se derivan solos.
    ============================================================ */
 :root{
-  --accent:#0F6BD7;
-  --accent-ink:#0a4a97;
+  --accent:#C63A12;
+  --accent-ink:#8C1B10;
   --accent-soft:color-mix(in srgb, var(--accent) 12%, white);
   /* Rail lateral del panel (derivados del color oscuro). */
   --rail-hover:color-mix(in srgb, var(--accent-ink) 82%, white);
