@@ -856,6 +856,50 @@ Después, prueba de punta a punta por WhatsApp real: escribir al número de prue
 pidiendo una propiedad, verificar que el agente la ofrece desde el inventario y
 que al mostrar interés llega el aviso a los vendedores.
 
+## Estado al 28/07/2026: las 12 tareas hechas y desplegadas
+
+Suite en 127 tests, 0 fallas. Todo pusheado a `main` y desplegado (Railway
+despliega solo con cada push).
+
+Se verificó pieza por pieza y contra producción: las rutas nuevas responden y
+están detrás del guard de sesión, y la app arranca —lo que prueba que las
+tablas se crearon, porque `init()` corre antes de `app.listen`.
+
+**No se verificó el circuito completo con una conversación real.** Nunca se vio
+al agente buscando una propiedad y calificando a alguien de verdad: hace falta
+inventario cargado y una charla por WhatsApp.
+
+### Pendiente para la próxima sesión
+
+**1. Configurar el canal de mail (sin esto no sale ningún aviso).**
+   - Cargar `RESEND_API_KEY` y `AVISOS_FROM` en Railway.
+   - **Verificar el dominio en Resend** (registros DNS). Sin eso sólo se puede
+     enviar desde `onboarding@resend.dev` y sólo a la casilla dueña de la
+     cuenta: sirve para probar, no para producción.
+   - Cargar el `email` de cada vendedor en la tabla `asesores` (la columna ya
+     existe; `listarConEmail` sólo toma los activos con mail).
+
+   Ojo: sin esto el scoring corre igual y los leads se ven en el panel, pero
+   nadie recibe nada.
+
+**2. Probar el panel con sesión real.** Entrar a `/panel/propiedades`, dar de
+   alta una propiedad, editarla y cambiarle el estado. Es lo único que no se
+   pudo ejercitar sin credenciales.
+
+**3. Prueba de punta a punta.** Con dos o tres propiedades cargadas, escribirle
+   al número de prueba pidiendo algo que exista en el inventario, y verificar:
+   que el agente use `buscar_propiedades` en vez de inventar, que pregunte la
+   moneda si se le da un presupuesto sin aclararla, que llame a `calificar_lead`
+   al mostrar interés, y que llegue el mail.
+
+**4. Escribir el prompt real.** `cliente/personalidad.js` sigue siendo el demo
+   genérico ("Demo, un negocio de ejemplo"): sólo se le sumaron las dos tools
+   nuevas y la regla de calificar. Cuando esté la info de la inmobiliaria hay
+   que reescribirlo entero.
+
+**5. Sembrar `negocio_info`** con los datos reales (hoy tiene los del demo:
+   Av. Siempreviva 742). Es lo que responde `consultar_info_negocio`.
+
 ## Backlog
 
 - **Aviso por plantilla de WhatsApp (`aviso_lead`)** como canal alternativo al
