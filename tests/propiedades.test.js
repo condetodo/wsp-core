@@ -135,3 +135,63 @@ test('las dos consultas usan los mismos parámetros del filtro', async () => {
   assert.deepStrictEqual(pool.consultas[0].params, pool.consultas[1].params);
   assert.deepStrictEqual(pool.consultas[0].params, ['venta', '%Pilar%']);
 });
+
+// --- validarPropiedad() ---------------------------------------------------
+
+const { validarPropiedad, OPERACIONES, TIPOS, ESTADOS } = require('../cliente/propiedades');
+
+test('acepta una propiedad mínima válida', () => {
+  const r = validarPropiedad({ operacion: 'venta', tipo: 'casa' });
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.limpia.operacion, 'venta');
+  assert.strictEqual(r.limpia.estado, 'disponible'); // default
+  assert.strictEqual(r.limpia.moneda, 'USD');        // default
+});
+
+test('rechaza operacion o tipo fuera de la lista cerrada', () => {
+  // 'depto' entraría a la base pero la tool busca 'departamento': la propiedad
+  // existiría y el agente no la encontraria nunca.
+  const r = validarPropiedad({ operacion: 'venta', tipo: 'depto' });
+  assert.strictEqual(r.ok, false);
+  assert.match(r.errores.join(' '), /tipo/);
+});
+
+test('rechaza la propiedad sin operacion ni tipo', () => {
+  const r = validarPropiedad({ zona: 'Pilar' });
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.errores.length, 2);
+});
+
+test('normaliza mayúsculas y espacios de los valores cerrados', () => {
+  // El importador de Excel trae "Venta", "Casa", "usd".
+  const r = validarPropiedad({ operacion: ' Venta ', tipo: 'CASA', moneda: 'usd' });
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.limpia.operacion, 'venta');
+  assert.strictEqual(r.limpia.tipo, 'casa');
+  assert.strictEqual(r.limpia.moneda, 'USD');
+});
+
+test('convierte los numéricos y deja null lo que no es número', () => {
+  const r = validarPropiedad({
+    operacion: 'alquiler', tipo: 'departamento',
+    ambientes: '2', precio: '450000', superficie_m2: '', dormitorios: 'dos',
+  });
+  assert.strictEqual(r.limpia.ambientes, 2);
+  assert.strictEqual(r.limpia.precio, 450000);
+  assert.strictEqual(r.limpia.superficie_m2, null);
+  assert.strictEqual(r.limpia.dormitorios, null);
+});
+
+test('rechaza un estado inventado', () => {
+  const r = validarPropiedad({ operacion: 'venta', tipo: 'casa', estado: 'en_veremos' });
+  assert.strictEqual(r.ok, false);
+  assert.match(r.errores.join(' '), /estado/);
+});
+
+test('las listas cerradas coinciden con el enum de la tool', () => {
+  const { DEFINICIONES } = require('../herramientas');
+  const d = DEFINICIONES.find((x) => x.name === 'buscar_propiedades');
+  assert.deepStrictEqual(d.input_schema.properties.operacion.enum, OPERACIONES);
+  assert.deepStrictEqual(d.input_schema.properties.tipo.enum, TIPOS);
+  assert.ok(ESTADOS.includes('disponible'));
+});

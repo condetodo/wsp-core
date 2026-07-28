@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/assets/branding.css">
+<script src="/assets/branding.js" defer></script>
+<title>Propiedades</title>
+<style>
+  :root{--bg:#efece4;--surface:#fffdf8;--surface-2:#f7f4ec;--ink:#23211d;--muted:#827d72;
+    --line:#e7e1d4;--line-strong:#d9d2c2;
+    --ok:#137a52;--ok-soft:#e2f0e8;--err:#c1502a;--err-soft:#f7e7df;--r:14px;}
+  *{box-sizing:border-box}html,body{height:100%}
+  body{font-family:system-ui,sans-serif;margin:0;color:var(--ink);background:var(--bg);height:100vh;display:flex}
+  .rail{width:190px;flex:none;background:var(--accent-ink);display:flex;flex-direction:column;overflow:auto}
+  .logo-card{margin:14px 12px 10px;background:#fff;border-radius:10px;padding:8px 10px}
+  .logo-card img{display:block;width:100%;max-width:110px;margin:0 auto}
+  .rail-label{font-size:10px;color:var(--rail-muted);letter-spacing:1.5px;margin:8px 18px 4px;text-transform:uppercase}
+  .rail a{display:flex;align-items:center;gap:10px;margin:2px 10px;padding:8px 10px;border-radius:9px;
+    text-decoration:none;color:var(--rail-muted);font-size:13px;font-weight:600}
+  .rail a svg{width:17px;height:17px;flex:none}
+  .rail a:hover{background:var(--rail-hover);color:#fff}
+  .rail a.active{background:#fff;color:var(--accent-ink)}
+  .rail-foot{margin-top:auto;padding:10px;border-top:1px solid var(--rail-line)}
+  .rail-user{display:flex;align-items:center;gap:9px;background:var(--rail-deep);border-radius:9px;padding:8px 10px}
+  .rail-user .av{width:28px;height:28px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+  .rail-user .info{flex:1;min-width:0;color:#fff}
+  .rail-user .info b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rail-user .info small{font-size:10px;color:var(--rail-muted)}
+  .rail-user form{margin:0}
+  .rail-user button{cursor:pointer;border:0;background:none;color:var(--rail-muted);padding:4px;display:grid;place-items:center}
+  .rail-user button:hover{color:#fff}
+  .wrap{flex:1;overflow:auto;padding:24px}
+  h1{font-size:20px;margin:0 0 4px}.sub{color:var(--muted);margin:0 0 14px;font-size:14px}
+  h2{font-size:15px;margin:0 0 10px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:16px}
+  .barra{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .barra .crece{flex:1}
+  table{width:100%;border-collapse:collapse;margin-top:4px}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
+  th{color:var(--muted);font-weight:600}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .muted{color:var(--muted)}
+  .badge{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+  .badge.disponible{background:var(--ok-soft);color:var(--ok)}
+  .badge.reservada{background:var(--accent-soft);color:var(--accent-ink)}
+  .badge.vendida,.badge.alquilada{background:var(--surface-2);color:var(--muted)}
+  input,select,textarea{width:100%;padding:8px 10px;font:inherit;font-size:13px;color:var(--ink);
+    background:var(--surface-2);border:1px solid var(--line-strong);border-radius:9px;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);background:var(--surface)}
+  textarea{min-height:60px;resize:vertical}
+  label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin:0 0 4px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .campo{min-width:0}
+  button.accion{cursor:pointer;font:inherit;font-size:13px;font-weight:600;padding:8px 14px;border-radius:9px;
+    border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+  button.accion:hover{background:var(--surface-2)}
+  button.primaria{border:0;color:#fff;background:linear-gradient(150deg,var(--accent),var(--accent-ink))}
+  button.primaria:hover{filter:brightness(1.06)}
+  .chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);
+    border-radius:999px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer}
+  .chip.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+  .msg{margin-top:10px;font-size:13px;border-radius:9px;padding:8px 12px;display:none}
+  .msg.ok{display:block;background:var(--ok-soft);color:var(--ok)}
+  .msg.err{display:block;background:var(--err-soft);color:var(--err)}
+  .vacio{padding:24px;text-align:center;color:var(--muted);font-size:14px}
+  .oculto{display:none}
+</style>
+</head>
+<body>
+<nav class="rail">
+  <div class="logo-card"><img src="/assets/logo.svg" alt=""></div>
+  <div class="rail-label">Panel</div>
+  <a href="/panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20l1.3-3.9C1.976 12.663 2.874 8.228 6.4 5.726c3.526-2.501 8.59-2.296 11.845.48 3.255 2.777 3.695 7.266 1.029 10.501-2.666 3.235-7.615 4.215-11.574 2.293z"/></svg>Conversaciones</a>
+  <a href="/panel/propiedades" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/><path d="M9 21v-6h6v6"/></svg>Propiedades</a>
+  <a href="/panel/plantillas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 9h1"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>Plantillas</a>
+  <a href="/panel/encuestas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17.75l-6.172 3.245 1.179-6.873-5-4.867 6.9-1L12 2l3.093 6.255 6.9 1-5 4.867 1.179 6.873z"/></svg>Encuestas</a>
+  <a href="/panel/envio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14L21 3"/><path d="M21 3l-6.5 18a.55.55 0 0 1-1 0l-3.5-7-7-3.5a.55.55 0 0 1 0-1z"/></svg>Envío</a>
+  <a href="/panel/historial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><path d="M9 12h.01"/><path d="M13 12h2"/><path d="M9 16h.01"/><path d="M13 16h2"/></svg>Historial</a>
+  <a href="/panel/metricas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="6" height="8" rx="1"/><rect x="9" y="8" width="6" height="12" rx="1"/><rect x="15" y="4" width="6" height="16" rx="1"/></svg>Métricas</a>
+  <a href="/panel/costos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A2 2 0 0 0 13 8h-2a2 2 0 1 0 0 4h2a2 2 0 1 1 0 4h-2a2 2 0 0 1-1.8-1"/><path d="M12 7v10"/></svg>Costos</a>
+  <div class="rail-foot">
+  <div class="rail-user">
+    <span class="av" id="railAv">·</span>
+    <div class="info"><b id="railYo">…</b><small>Conectado</small></div>
+    <form method="post" action="/panel/logout">
+      <button title="Salir"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></button>
+    </form>
+  </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <h1>Propiedades</h1>
+  <p class="sub">El inventario que consulta el agente. Sólo ofrece las <b>disponibles</b>.</p>
+
+  <div class="card">
+    <div class="barra">
+      <button class="chip active" data-filtro="">Todas</button>
+      <button class="chip" data-filtro="disponible">Disponibles</button>
+      <button class="chip" data-filtro="venta">En venta</button>
+      <button class="chip" data-filtro="alquiler">En alquiler</button>
+      <span class="crece"></span>
+      <button class="accion primaria" id="btnNueva">Nueva propiedad</button>
+      <button class="accion" id="btnNuevoDes">Nuevo desarrollo</button>
+    </div>
+    <div id="tabla"><div class="vacio">Cargando…</div></div>
+  </div>
+
+  <!-- Alta / edición de propiedad -->
+  <div class="card oculto" id="formCard">
+    <h2 id="formTitulo">Nueva propiedad</h2>
+    <div class="grid">
+      <div class="campo"><label>Operación *</label><select id="f_operacion"></select></div>
+      <div class="campo"><label>Tipo *</label><select id="f_tipo"></select></div>
+      <div class="campo"><label>Estado</label><select id="f_estado"></select></div>
+      <div class="campo"><label>Desarrollo</label><select id="f_desarrollo"></select></div>
+      <div class="campo"><label>Zona</label><input id="f_zona" placeholder="Pilar"></div>
+      <div class="campo"><label>Dirección</label><input id="f_direccion"></div>
+      <div class="campo"><label>Ambientes</label><input id="f_ambientes" inputmode="numeric"></div>
+      <div class="campo"><label>Dormitorios</label><input id="f_dormitorios" inputmode="numeric"></div>
+      <div class="campo"><label>Superficie m²</label><input id="f_superficie_m2" inputmode="numeric"></div>
+      <div class="campo"><label>Precio</label><input id="f_precio" inputmode="numeric"></div>
+      <div class="campo"><label>Moneda</label><select id="f_moneda"></select></div>
+      <div class="campo"><label>Expensas</label><input id="f_expensas" inputmode="numeric"></div>
+      <div class="campo"><label>Link</label><input id="f_link" placeholder="https://…"></div>
+    </div>
+    <div style="margin-top:10px"><label>Descripción</label><textarea id="f_descripcion" placeholder="Lo que el agente le va a contar al cliente."></textarea></div>
+    <div class="barra" style="margin:12px 0 0">
+      <button class="accion primaria" id="btnGuardar">Guardar</button>
+      <button class="accion" id="btnCancelar">Cancelar</button>
+    </div>
+    <div class="msg" id="formMsg"></div>
+  </div>
+
+  <!-- Alta de desarrollo -->
+  <div class="card oculto" id="desCard">
+    <h2>Nuevo desarrollo</h2>
+    <div class="grid">
+      <div class="campo"><label>Nombre *</label><input id="d_nombre" placeholder="Torres del Sol"></div>
+      <div class="campo"><label>Zona</label><input id="d_zona"></div>
+      <div class="campo"><label>Dirección</label><input id="d_direccion"></div>
+      <div class="campo"><label>Estado de obra</label><select id="d_estado_obra">
+        <option value="pozo">pozo</option>
+        <option value="en construcción">en construcción</option>
+        <option value="terminado">terminado</option>
+      </select></div>
+      <div class="campo"><label>Entrega</label><input id="d_entrega" type="date"></div>
+      <div class="campo"><label>Financiación</label><input id="d_financiacion" placeholder="30% anticipo + 40 cuotas"></div>
+    </div>
+    <div style="margin-top:10px"><label>Descripción</label><textarea id="d_descripcion"></textarea></div>
+    <div class="barra" style="margin:12px 0 0">
+      <button class="accion primaria" id="btnGuardarDes">Guardar</button>
+      <button class="accion" id="btnCancelarDes">Cancelar</button>
+    </div>
+    <div class="msg" id="desMsg"></div>
+  </div>
+</div>
+
+<script>
+fetch('/panel/api/yo').then(r=>r.json()).then(d=>{
+  const u=d.nombre||d.usuario||'';
+  document.getElementById('railYo').textContent=u;
+  document.getElementById('railAv').textContent=(u[0]||'·').toUpperCase();
+});
+
+let datos = { propiedades: [], desarrollos: [], opciones: null };
+let filtro = '';
+let editando = null;   // id de la propiedad en edición, o null si es alta
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function plata(v, moneda) {
+  if (v == null) return '<span class="muted">—</span>';
+  const n = Number(v).toLocaleString('es-AR', { maximumFractionDigits: 0 });
+  return (moneda === 'ARS' ? '$ ' : 'US$ ') + n;
+}
+
+function opciones(sel, lista, vacio) {
+  sel.innerHTML = (vacio ? '<option value="">—</option>' : '') +
+    lista.map(v => '<option value="' + esc(v) + '">' + esc(v) + '</option>').join('');
+}
+
+function pasaFiltro(p) {
+  if (!filtro) return true;
+  if (filtro === 'disponible') return p.estado === 'disponible';
+  return p.operacion === filtro;
+}
+
+function pintar() {
+  const lista = datos.propiedades.filter(pasaFiltro);
+  if (!lista.length) {
+    $('tabla').innerHTML = '<div class="vacio">' +
+      (datos.propiedades.length ? 'Ninguna propiedad con ese filtro.'
+        : 'Todavía no hay propiedades cargadas. El agente no va a poder ofrecer nada.') + '</div>';
+    return;
+  }
+  $('tabla').innerHTML =
+    '<table><thead><tr>' +
+      '<th>Operación</th><th>Tipo</th><th>Zona</th><th class="num">Amb.</th>' +
+      '<th class="num">Precio</th><th>Desarrollo</th><th>Estado</th><th></th>' +
+    '</tr></thead><tbody>' +
+    lista.map(p =>
+      '<tr>' +
+      '<td>' + esc(p.operacion) + '</td>' +
+      '<td>' + esc(p.tipo) + '</td>' +
+      '<td>' + (esc(p.zona) || '<span class="muted">—</span>') +
+        (p.direccion ? '<br><small class="muted">' + esc(p.direccion) + '</small>' : '') + '</td>' +
+      '<td class="num">' + (p.ambientes == null ? '<span class="muted">—</span>' : p.ambientes) + '</td>' +
+      '<td class="num">' + plata(p.precio, p.moneda) + '</td>' +
+      '<td>' + (esc(p.desarrollo) || '<span class="muted">—</span>') + '</td>' +
+      '<td><span class="badge ' + esc(p.estado) + '">' + esc(p.estado) + '</span></td>' +
+      '<td class="num">' +
+        '<button class="accion" data-editar="' + p.id + '">Editar</button> ' +
+        '<select data-estado="' + p.id + '" style="width:auto;display:inline-block">' +
+          datos.opciones.estados.map(e =>
+            '<option value="' + e + '"' + (e === p.estado ? ' selected' : '') + '>' + e + '</option>').join('') +
+        '</select>' +
+      '</td></tr>').join('') +
+    '</tbody></table>';
+
+  $('tabla').querySelectorAll('[data-editar]').forEach(b =>
+    b.onclick = () => abrirForm(Number(b.dataset.editar)));
+  $('tabla').querySelectorAll('[data-estado]').forEach(s =>
+    s.onchange = () => cambiarEstado(Number(s.dataset.estado), s.value));
+}
+
+async function cargar() {
+  const r = await fetch('/panel/api/propiedades');
+  datos = await r.json();
+  const o = datos.opciones;
+  opciones($('f_operacion'), o.operaciones);
+  opciones($('f_tipo'), o.tipos);
+  opciones($('f_estado'), o.estados);
+  opciones($('f_moneda'), o.monedas);
+  $('f_desarrollo').innerHTML = '<option value="">— sin desarrollo —</option>' +
+    datos.desarrollos.map(d => '<option value="' + d.id + '">' + esc(d.nombre) + '</option>').join('');
+  pintar();
+}
+
+function abrirForm(id) {
+  editando = id || null;
+  const p = id ? datos.propiedades.find(x => x.id === id) : null;
+  $('formTitulo').textContent = p ? 'Editar propiedad' : 'Nueva propiedad';
+  const campos = ['operacion','tipo','estado','zona','direccion','ambientes','dormitorios',
+                  'superficie_m2','precio','moneda','expensas','link','descripcion'];
+  campos.forEach(c => { $('f_' + c).value = p && p[c] != null ? p[c] : ''; });
+  $('f_desarrollo').value = p && p.desarrollo_id != null ? p.desarrollo_id : '';
+  $('formMsg').className = 'msg';
+  $('formCard').classList.remove('oculto');
+  $('desCard').classList.add('oculto');
+  $('formCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function guardar() {
+  const cuerpo = {
+    operacion: $('f_operacion').value, tipo: $('f_tipo').value, estado: $('f_estado').value,
+    desarrollo_id: $('f_desarrollo').value || null,
+    zona: $('f_zona').value, direccion: $('f_direccion').value,
+    ambientes: $('f_ambientes').value, dormitorios: $('f_dormitorios').value,
+    superficie_m2: $('f_superficie_m2').value, precio: $('f_precio').value,
+    moneda: $('f_moneda').value, expensas: $('f_expensas').value,
+    link: $('f_link').value, descripcion: $('f_descripcion').value,
+  };
+  const url = editando ? '/panel/api/propiedades/' + editando : '/panel/api/propiedades';
+  const r = await fetch(url, {
+    method: editando ? 'PUT' : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cuerpo),
+  });
+  const d = await r.json();
+  if (!r.ok) {
+    $('formMsg').className = 'msg err';
+    $('formMsg').textContent = 'No se guardó: ' + (d.detalle ? d.detalle.join(', ') : d.error);
+    return;
+  }
+  $('formCard').classList.add('oculto');
+  await cargar();
+}
+
+async function cambiarEstado(id, estado) {
+  await fetch('/panel/api/propiedades/' + id + '/estado', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ estado }),
+  });
+  await cargar();
+}
+
+async function guardarDesarrollo() {
+  const cuerpo = {
+    nombre: $('d_nombre').value, zona: $('d_zona').value, direccion: $('d_direccion').value,
+    estado_obra: $('d_estado_obra').value, entrega: $('d_entrega').value,
+    financiacion: $('d_financiacion').value, descripcion: $('d_descripcion').value,
+  };
+  const r = await fetch('/panel/api/desarrollos', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cuerpo),
+  });
+  const d = await r.json();
+  if (!r.ok) {
+    $('desMsg').className = 'msg err';
+    $('desMsg').textContent = 'No se guardó: ' + (d.detalle ? d.detalle.join(', ') : d.error);
+    return;
+  }
+  $('desCard').classList.add('oculto');
+  ['d_nombre','d_zona','d_direccion','d_entrega','d_financiacion','d_descripcion']
+    .forEach(c => { $(c).value = ''; });
+  await cargar();
+}
+
+document.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+  document.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+  c.classList.add('active');
+  filtro = c.dataset.filtro;
+  pintar();
+});
+$('btnNueva').onclick = () => abrirForm(null);
+$('btnGuardar').onclick = guardar;
+$('btnCancelar').onclick = () => $('formCard').classList.add('oculto');
+$('btnNuevoDes').onclick = () => {
+  $('desCard').classList.remove('oculto');
+  $('formCard').classList.add('oculto');
+  $('desCard').scrollIntoView({ behavior: 'smooth' });
+};
+$('btnGuardarDes').onclick = guardarDesarrollo;
+$('btnCancelarDes').onclick = () => $('desCard').classList.add('oculto');
+
+cargar();
+</script>
+</body>
+</html>

@@ -13,6 +13,14 @@
 // dispare el costo de todo el resto de la charla.
 const TOPE = 5;
 
+// Valores cerrados. Son los mismos que el enum de la tool: si acá entra un
+// 'depto' y la tool busca 'departamento', la propiedad existe pero el agente
+// nunca la encuentra. Ese error no da ningún síntoma visible.
+const OPERACIONES = ['venta', 'alquiler'];
+const TIPOS = ['casa', 'departamento', 'ph', 'lote', 'local', 'oficina'];
+const ESTADOS = ['disponible', 'reservada', 'vendida', 'alquilada'];
+const MONEDAS = ['USD', 'ARS'];
+
 // ¿Es un número usable? El modelo a veces manda strings, null o NaN en vez de
 // omitir el campo. PURA.
 function esNumero(v) {
@@ -60,6 +68,58 @@ function construirFiltro(criterios = {}) {
   return { where: cond.join(' AND '), params, aviso };
 }
 
+// Pasa un valor a número, o null si no lo es. Tolera lo que llega del Excel y
+// de los formularios: strings, vacíos, "U$S 145.000". PURA.
+function aNumero(v) {
+  if (v === null || v === undefined || v === '') return null;
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  // Saca todo lo que no sea dígito, coma o punto (símbolos de moneda, espacios)
+  // y trata el punto como separador de miles, que es como se escribe acá.
+  const limpio = String(v).replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.');
+  const n = Number(limpio);
+  return Number.isFinite(n) && limpio !== '' ? n : null;
+}
+
+// Valida y normaliza una propiedad venida del panel o del Excel.
+// PURA. Devuelve { ok: true, limpia } o { ok: false, errores: [...] }.
+function validarPropiedad(datos = {}) {
+  const errores = [];
+  const enLista = (valor, lista, campo, obligatorio) => {
+    const v = esTexto(valor) ? valor.trim().toLowerCase() : null;
+    if (!v) {
+      if (obligatorio) errores.push(`falta ${campo}`);
+      return null;
+    }
+    const match = lista.find((x) => x.toLowerCase() === v);
+    if (!match) errores.push(`${campo} inválido: "${valor}"`);
+    return match || null;
+  };
+
+  const operacion = enLista(datos.operacion, OPERACIONES, 'operacion', true);
+  const tipo = enLista(datos.tipo, TIPOS, 'tipo', true);
+  const estado = datos.estado ? enLista(datos.estado, ESTADOS, 'estado', false) : 'disponible';
+  const moneda = datos.moneda ? enLista(datos.moneda, MONEDAS, 'moneda', false) : 'USD';
+
+  if (errores.length) return { ok: false, errores };
+
+  return {
+    ok: true,
+    limpia: {
+      desarrollo_id: aNumero(datos.desarrollo_id),
+      operacion, tipo, estado, moneda,
+      zona: esTexto(datos.zona) ? datos.zona.trim() : null,
+      direccion: esTexto(datos.direccion) ? datos.direccion.trim() : null,
+      ambientes: aNumero(datos.ambientes),
+      dormitorios: aNumero(datos.dormitorios),
+      superficie_m2: aNumero(datos.superficie_m2),
+      precio: aNumero(datos.precio),
+      expensas: aNumero(datos.expensas),
+      descripcion: esTexto(datos.descripcion) ? datos.descripcion.trim() : null,
+      link: esTexto(datos.link) ? datos.link.trim() : null,
+    },
+  };
+}
+
 // Busca propiedades disponibles. Devuelve hasta TOPE resultados más el TOTAL,
 // para que el agente pueda decir "hay 23, acotemos" en vez de mostrar cinco y
 // dar a entender que no hay más.
@@ -101,4 +161,84 @@ async function buscar(pool, criterios = {}) {
   return { total: conteo.rows[0].n, mostradas: rows.length, propiedades: rows };
 }
 
-module.exports = { construirFiltro, buscar, esNumero, esTexto, TOPE };
+// --- ABM para el panel ------------------------------------------------------
+
+const CAMPOS = [
+  'desarrollo_id', 'operacion', 'tipo', 'zona', 'direccion', 'ambientes',
+  'dormitorios', 'superficie_m2', 'precio', 'moneda', 'expensas',
+  'descripcion', 'link', 'estado',
+];
+
+// Todas las propiedades, con el nombre del desarrollo resuelto. Para el panel:
+// acá no filtramos por estado, el vendedor tiene que ver también las vendidas.
+async function listar(pool) {
+  const { rows } = await pool.query(
+    `SELECT p.*, d.nombre AS desarrollo
+       FROM propiedades p
+       LEFT JOIN desarrollos d ON d.id = p.desarrollo_id
+      ORDER BY p.creado DESC`
+  );
+  return rows;
+}
+
+async function crear(pool, limpia) {
+  const valores = CAMPOS.map((c) => limpia[c]);
+  const marcas = CAMPOS.map((_, i) => '$' + (i + 1)).join(', ');
+  const { rows } = await pool.query(
+    `INSERT INTO propiedades (${CAMPOS.join(', ')}) VALUES (${marcas}) RETURNING *`,
+    valores
+  );
+  return rows[0];
+}
+
+async function actualizar(pool, id, limpia) {
+  const sets = CAMPOS.map((c, i) => `${c} = $${i + 2}`).join(', ');
+  const { rows } = await pool.query(
+    `UPDATE propiedades SET ${sets}, actualizado = now() WHERE id = $1 RETURNING *`,
+    [id, ...CAMPOS.map((c) => limpia[c])]
+  );
+  return rows[0] || null;
+}
+
+// Dar de baja NO borra: la propiedad pasa a vendida/alquilada. El filtro de
+// búsqueda ya la excluye (sólo mira 'disponible') y no se pierde el historial.
+async function cambiarEstado(pool, id, estado) {
+  if (!ESTADOS.includes(estado)) return null;
+  const { rows } = await pool.query(
+    `UPDATE propiedades SET estado = $2, actualizado = now() WHERE id = $1 RETURNING *`,
+    [id, estado]
+  );
+  return rows[0] || null;
+}
+
+async function listarDesarrollos(pool) {
+  const { rows } = await pool.query(
+    `SELECT d.*, (SELECT COUNT(*)::int FROM propiedades p WHERE p.desarrollo_id = d.id) AS unidades
+       FROM desarrollos d ORDER BY d.nombre`
+  );
+  return rows;
+}
+
+async function crearDesarrollo(pool, datos = {}) {
+  if (!esTexto(datos.nombre)) return { ok: false, errores: ['falta nombre'] };
+  const { rows } = await pool.query(
+    `INSERT INTO desarrollos (nombre, zona, direccion, estado_obra, entrega, financiacion, descripcion)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+    [
+      datos.nombre.trim(),
+      esTexto(datos.zona) ? datos.zona.trim() : null,
+      esTexto(datos.direccion) ? datos.direccion.trim() : null,
+      esTexto(datos.estado_obra) ? datos.estado_obra.trim() : 'pozo',
+      esTexto(datos.entrega) ? datos.entrega.trim() : null,
+      esTexto(datos.financiacion) ? datos.financiacion.trim() : null,
+      esTexto(datos.descripcion) ? datos.descripcion.trim() : null,
+    ]
+  );
+  return { ok: true, desarrollo: rows[0] };
+}
+
+module.exports = {
+  construirFiltro, buscar, validarPropiedad, aNumero, esNumero, esTexto,
+  listar, crear, actualizar, cambiarEstado, listarDesarrollos, crearDesarrollo,
+  TOPE, OPERACIONES, TIPOS, ESTADOS, MONEDAS, CAMPOS,
+};

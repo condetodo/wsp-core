@@ -21,6 +21,8 @@ const { normalizar } = require('./contactos');
 const { resolverCaso, mejorEsfuerzo } = require('./casos');
 const { resumenMetricas } = require('./metricas');
 const { resumenPanelEncuestas, registrarTemplateEncuesta } = require('./encuestas');
+const propiedades = require('./cliente/propiedades');
+const { pool } = require('./db');
 
 const router = express.Router();
 const PANEL_SECRET = process.env.PANEL_SECRET;
@@ -168,6 +170,9 @@ router.get('/encuestas', (req, res) => {
 });
 router.get('/metricas', (req, res) => {
   res.sendFile(path.join(__dirname, 'panel-metricas.html'));
+});
+router.get('/propiedades', (req, res) => {
+  res.sendFile(path.join(__dirname, 'panel-propiedades.html'));
 });
 
 // --- API JSON (todo bajo guard) ---
@@ -531,6 +536,84 @@ router.get('/api/metricas', async (req, res) => {
   } catch (err) {
     console.error('❌ /api/metricas:', err.message);
     res.status(500).json({ error: 'error_interno' });
+  }
+});
+
+// --- API Propiedades (vertical inmobiliario) --------------------------------
+
+// Listado completo para la solapa: incluye las no disponibles, porque el
+// vendedor tiene que ver también lo vendido y lo reservado.
+router.get('/api/propiedades', async (req, res) => {
+  try {
+    const [lista, desarrollos] = await Promise.all([
+      propiedades.listar(pool),
+      propiedades.listarDesarrollos(pool),
+    ]);
+    res.json({
+      propiedades: lista,
+      desarrollos,
+      opciones: {
+        operaciones: propiedades.OPERACIONES,
+        tipos: propiedades.TIPOS,
+        estados: propiedades.ESTADOS,
+        monedas: propiedades.MONEDAS,
+      },
+    });
+  } catch (err) {
+    console.error('❌ /api/propiedades:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/api/propiedades', async (req, res) => {
+  const v = propiedades.validarPropiedad(req.body || {});
+  if (!v.ok) return res.status(400).json({ error: 'datos_invalidos', detalle: v.errores });
+  try {
+    res.json({ propiedad: await propiedades.crear(pool, v.limpia) });
+  } catch (err) {
+    console.error('❌ POST /api/propiedades:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/api/propiedades/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'id_invalido' });
+  const v = propiedades.validarPropiedad(req.body || {});
+  if (!v.ok) return res.status(400).json({ error: 'datos_invalidos', detalle: v.errores });
+  try {
+    const fila = await propiedades.actualizar(pool, id, v.limpia);
+    if (!fila) return res.status(404).json({ error: 'propiedad_inexistente' });
+    res.json({ propiedad: fila });
+  } catch (err) {
+    console.error('❌ PUT /api/propiedades:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Cambio de estado: es la "baja". No borramos, así el filtro la excluye sola
+// (sólo busca 'disponible') y no se pierde el historial de lo vendido.
+router.post('/api/propiedades/:id/estado', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'id_invalido' });
+  try {
+    const fila = await propiedades.cambiarEstado(pool, id, (req.body || {}).estado);
+    if (!fila) return res.status(400).json({ error: 'estado_invalido_o_inexistente' });
+    res.json({ propiedad: fila });
+  } catch (err) {
+    console.error('❌ POST /api/propiedades/:id/estado:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/api/desarrollos', async (req, res) => {
+  try {
+    const r = await propiedades.crearDesarrollo(pool, req.body || {});
+    if (!r.ok) return res.status(400).json({ error: 'datos_invalidos', detalle: r.errores });
+    res.json({ desarrollo: r.desarrollo });
+  } catch (err) {
+    console.error('❌ POST /api/desarrollos:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
