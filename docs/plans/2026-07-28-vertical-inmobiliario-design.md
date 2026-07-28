@@ -44,11 +44,13 @@ Lo que no existe: el inventario de propiedades (`cliente/schema.js` sólo tiene
 4. **La alerta no silencia al bot.** El cliente nunca pidió un humano; callar al
    bot lo deja esperando. Los vendedores intervienen desde el panel cuando
    quieren, con `clientes.intervenir`, que ya existe.
-5. **El aviso sale por WhatsApp, no por mail.** El volumen de alertas es bajo
-   por definición y el costo es despreciable frente a una comisión. El mail
-   exigiría proveedor, dependencia y variables nuevas (hoy no hay librería de
-   correo), y nadie lo lee un sábado a la noche. Queda como canal alternativo si
-   algún día el volumen hace doler el costo.
+5. **El aviso sale por mail, con Resend.** Decisión de Francisco (28/07/2026):
+   más barato que la plantilla de WhatsApp y sin depender de la aprobación de
+   Meta, que tarda. Implica sumar la dependencia `resend`, la variable
+   `RESEND_API_KEY`, un dominio verificado y una columna `email` en `asesores`
+   (hoy sólo tiene `whatsapp`). El aviso por plantilla de WhatsApp
+   (`aviso_lead`) queda en el backlog como canal alternativo: es el que llega al
+   teléfono un sábado a la noche, cuando nadie mira el correo.
 6. **La calificación es core, no vertical.** Sirve para cualquier rubro.
 
 ## Modelo de datos
@@ -110,15 +112,15 @@ segunda charla el bot retome sin volver a preguntar todo.
 ### Alerta
 
 Umbral configurable en la tabla `config`, que ya existe y ya se edita desde el
-panel. Al cruzarlo: plantilla `aviso_lead` a los vendedores (mismo mecanismo que
-`derivacion.js`) y destaque en el panel. El bot sigue atendiendo.
+panel. Al cruzarlo: mail a los vendedores vía Resend y destaque en el panel. El
+bot sigue atendiendo.
 
 **Anti-repetición:** un aviso por persona cada 24 hs, salvo que el puntaje suba.
 Sin esto, cada mensaje posterior vuelve a cruzar el umbral y dispara otra
 alerta.
 
-**La plantilla `aviso_lead` la tiene que aprobar Meta y eso tarda.** Mandarla a
-aprobación al principio del trabajo, no al final. Se usa `crear-template.js`.
+El canal está aislado en un módulo propio (`avisos.js`), de modo que sumar
+WhatsApp más adelante no toque la lógica de calificación.
 
 ## Testing
 
@@ -129,12 +131,15 @@ esconden los errores caros:
   presentes y ausentes);
 - la lógica de umbral y anti-repetición de la alerta.
 
-## Duda abierta
+## Duda resuelta
 
-**De dónde sale el inventario.** No está confirmado qué usa hoy la inmobiliaria.
-Se asume Excel. Si resulta que usan un CRM inmobiliario con API (Tokko Broker es
-el más común en Argentina), conviene sincronizar desde ahí y dejar el panel como
-sólo lectura: el ABM manual provocaría doble carga —cargar la propiedad en el
-CRM para publicarla y otra vez en el panel para que el bot la sepa— y eso se
-abandona en dos semanas, dejando al bot con datos viejos. El modelo de datos de
-este diseño sirve igual como destino de esa sincronización.
+**De dónde sale el inventario.** Confirmado por Francisco (28/07/2026): la
+inmobiliaria **no tiene CRM**; esta plataforma pasa a serlo. El panel es la
+fuente de verdad, con ABM manual e importador de Excel para la carga inicial. No
+hay riesgo de doble carga ni de datos desincronizados con un sistema externo.
+
+## Backlog
+
+- **Aviso por plantilla de WhatsApp (`aviso_lead`)** como canal alternativo al
+  mail. Es el que llega al teléfono fuera del horario de oficina. Requiere
+  aprobación de Meta, que tarda, así que conviene mandarla con tiempo.

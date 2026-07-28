@@ -14,49 +14,113 @@
 
 ## Orden de las tareas
 
-La Tarea 1 va primero porque Meta tarda en aprobar plantillas y el resto no depende
-de ella. Después el inventario completo (2 a 7) y al final la calificación (8 a 12).
+Tarea 1 el canal de aviso (independiente del resto), después el inventario
+completo (2 a 7) y al final la calificación (8 a 12).
+
+**Confirmado el 28/07/2026:** la inmobiliaria no tiene CRM y esta plataforma pasa
+a serlo, así que el panel es la fuente de verdad del inventario. Las tareas 6 y 7
+van tal cual están escritas.
 
 ---
 
-### Tarea 1: Mandar la plantilla `aviso_lead` a aprobación de Meta
+### Tarea 1: Canal de aviso por mail (Resend)
 
-Se hace primero y se sigue trabajando mientras Meta revisa. Sin plantilla aprobada
-el aviso no sale: WhatsApp no entrega texto libre fuera de la ventana de 24 hs.
+El aviso sale por mail, no por plantilla de WhatsApp. Va aislado en su propio
+módulo para que sumar WhatsApp después no toque la lógica de calificación.
 
 **Files:**
-- Create: `crear-template-lead.js` (espejo de `crear-template-encuesta.js`)
+- Create: `avisos.js`
+- Test: `tests/avisos.test.js`
+- Modify: `db.js` (columna `email` en `asesores`)
+- Modify: `package.json`, `.env.example`
 
-**Step 1: Escribir el script**
-
-Cuerpo de la plantilla, con tres variables (nombre, puntaje, motivo):
-
-```
-Lead calificado: {{1}} (puntaje {{2}}/5). Motivo: {{3}}. Entrá al panel para tomarlo.
-```
-
-Categoría `UTILITY`, idioma `es_AR`. Seguí el patrón exacto de
-`crear-template-encuesta.js`: usa `crearTemplate` de `meta-templates.js` y da de
-alta la fila local con `plantillas.crearPlantilla`.
-
-Los ejemplos para la revisión de Meta tienen que ser valores representativos
-(`Carlos Rivarola`, `4`, `pidió visitar dos propiedades`), no los nombres de los
-campos: Meta rechaza los ejemplos genéricos.
-
-**Step 2: Correrlo contra Railway**
+**Step 1: Dependencia y variable**
 
 ```bash
-node crear-template-lead.js
+npm install resend
 ```
 
-Esperado: imprime el id de Meta y la plantilla queda local en estado `PENDING`.
+En `.env.example`, documentá las dos variables nuevas:
 
-**Step 3: Commit**
+```
+# Aviso de leads calificados por mail (https://resend.com)
+RESEND_API_KEY=
+# Remitente. El dominio tiene que estar verificado en Resend.
+AVISOS_FROM=
+```
+
+**Step 2: Columna `email` en asesores**
+
+`asesores` hoy guarda `whatsapp` pero no mail. En `db.js`, junto a los otros
+`ALTER TABLE ... ADD COLUMN IF NOT EXISTS`:
+
+```js
+  await pool.query(`ALTER TABLE asesores ADD COLUMN IF NOT EXISTS email TEXT;`);
+```
+
+**Step 3: Test del render, primero**
+
+El armado del mail es puro y se testea; el envío no.
+
+```js
+const { test } = require('node:test');
+const assert = require('node:assert');
+const { renderAvisoLead } = require('../avisos');
+
+test('el asunto lleva nombre y puntaje, para que se lea sin abrir el mail', () => {
+  const { asunto } = renderAvisoLead({ nombre: 'Carlos Rivarola', puntaje: 5, motivo: 'quiere visitar el sábado' });
+  assert.match(asunto, /Carlos Rivarola/);
+  assert.match(asunto, /5/);
+});
+
+test('el cuerpo incluye motivo e interés', () => {
+  const { html } = renderAvisoLead({
+    nombre: 'Ana', puntaje: 4, motivo: 'dejó su mail', interes: '2 ambientes en Pilar',
+  });
+  assert.match(html, /dejó su mail/);
+  assert.match(html, /2 ambientes en Pilar/);
+});
+
+test('tolera lead sin nombre y sin interés', () => {
+  const { asunto, html } = renderAvisoLead({ puntaje: 4, motivo: 'preguntó por tres propiedades' });
+  assert.match(asunto, /sin nombre/i);
+  assert.ok(html.length > 0);
+});
+```
+
+**Step 4: Correr y verificar que falla**
 
 ```bash
-git add crear-template-lead.js
-git commit -m "feat: script de alta de la plantilla aviso_lead"
+node --test tests/avisos.test.js
 ```
+
+Esperado: FAIL, "Cannot find module '../avisos'".
+
+**Step 5: Implementar**
+
+`renderAvisoLead(datos)` puro, devolviendo `{ asunto, html }`, y
+`avisarLeadPorMail(destinos, datos)` que usa Resend. Si falta `RESEND_API_KEY`,
+loguear una advertencia y devolver `{ avisados: 0 }` **sin tirar error**: el
+aviso es una comodidad, nunca puede romper la conversación con el cliente. Mismo
+criterio que `mejorEsfuerzo` en `casos.js`.
+
+**Step 6: Tests en verde**
+
+```bash
+node --test tests/avisos.test.js
+```
+
+**Step 7: Commit**
+
+```bash
+git add avisos.js tests/avisos.test.js db.js package.json package-lock.json .env.example
+git commit -m "feat: canal de aviso de leads por mail con Resend"
+```
+
+> **Ojo con Resend:** para mandar desde un dominio propio hay que verificarlo en
+> el panel de Resend (registros DNS). Sin eso sólo se puede enviar desde
+> `onboarding@resend.dev` y únicamente a la casilla dueña de la cuenta, lo que
+> sirve para probar pero no para producción.
 
 ---
 
@@ -655,16 +719,22 @@ async function calificar(numero, { puntaje, motivo, interes }) {
 
   if (!avisar) return { ok: true, avisados: 0 };
 
-  const nombre = [persona.nombre, persona.apellido].filter(Boolean).join(' ') || 'Cliente sin nombre';
-  const destinos = (await listarConWhatsapp()).map((a) => a.whatsapp);
-  let avisados = 0;
-  for (const dest of destinos) {
-    const resp = await enviarTemplate(dest, 'aviso_lead', 'es_AR', [nombre, String(puntaje), motivo || 'sin motivo']);
-    if (resp && Array.isArray(resp.messages)) avisados++;
-  }
-  return { ok: true, avisados };
+  const nombre = [persona.nombre, persona.apellido].filter(Boolean).join(' ') || null;
+  const destinos = await listarConEmail();   // asesores activos con mail cargado
+  const r = await avisarLeadPorMail(destinos, { nombre, puntaje, motivo, interes });
+  return { ok: true, avisados: r.avisados };
 }
 ```
+
+Los require de arriba usan el canal de mail, no el de WhatsApp:
+
+```js
+const { avisarLeadPorMail } = require('./avisos');
+const { listarConEmail } = require('./asesores');
+```
+
+`listarConEmail` hay que agregarla a `asesores.js`, espejo de `listarConWhatsapp`:
+activos y con `email` no nulo.
 
 **Importante: el aviso NO silencia al bot.** No se llama a `marcarEnAsesor`. El
 cliente nunca pidió un humano; si lo callamos, se queda esperando. Los vendedores
@@ -786,8 +856,10 @@ Después, prueba de punta a punta por WhatsApp real: escribir al número de prue
 pidiendo una propiedad, verificar que el agente la ofrece desde el inventario y
 que al mostrar interés llega el aviso a los vendedores.
 
-## Recordatorio
+## Backlog
 
-Antes de empezar, confirmar de dónde sale el inventario (la duda abierta del
-diseño). Si la inmobiliaria usa un CRM con API, las Tareas 6 y 7 cambian de forma:
-el panel pasa a sólo lectura y en lugar del importador va una sincronización.
+- **Aviso por plantilla de WhatsApp (`aviso_lead`)** como canal alternativo al
+  mail, para que la alerta llegue al teléfono fuera del horario de oficina. El
+  módulo `avisos.js` está aislado justamente para poder sumarlo sin tocar la
+  lógica de calificación. Requiere aprobación de Meta, que tarda: mandarla con
+  tiempo, con `crear-template-encuesta.js` como molde.
