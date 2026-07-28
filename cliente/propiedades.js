@@ -60,4 +60,45 @@ function construirFiltro(criterios = {}) {
   return { where: cond.join(' AND '), params, aviso };
 }
 
-module.exports = { construirFiltro, esNumero, esTexto, TOPE };
+// Busca propiedades disponibles. Devuelve hasta TOPE resultados más el TOTAL,
+// para que el agente pueda decir "hay 23, acotemos" en vez de mostrar cinco y
+// dar a entender que no hay más.
+//
+// Recibe el pool por parámetro (en vez de importarlo) para poder probarla sin base.
+async function buscar(pool, criterios = {}) {
+  const { where, params, aviso } = construirFiltro(criterios);
+
+  // Cortocircuito: si el tope de precio se va a ignorar, no gastamos la consulta
+  // y le devolvemos al agente qué preguntar.
+  if (aviso === 'precio_sin_moneda') {
+    return {
+      aviso: 'Falta saber si el presupuesto está en pesos o en dólares. Preguntáselo al cliente antes de buscar.',
+    };
+  }
+
+  // El COUNT y el SELECT comparten where y params: si filtraran distinto, el
+  // total mentiría.
+  const conteo = await pool.query(
+    `SELECT COUNT(*)::int AS n FROM propiedades WHERE ${where}`,
+    params
+  );
+
+  // LEFT JOIN, no INNER: con INNER las propiedades sueltas (desarrollo_id null)
+  // desaparecerían de toda búsqueda.
+  const { rows } = await pool.query(
+    `SELECT p.id, p.operacion, p.tipo, p.zona, p.direccion, p.ambientes,
+            p.dormitorios, p.superficie_m2, p.precio, p.moneda, p.expensas,
+            p.descripcion, p.link,
+            d.nombre AS desarrollo, d.estado_obra, d.entrega, d.financiacion
+       FROM propiedades p
+       LEFT JOIN desarrollos d ON d.id = p.desarrollo_id
+      WHERE ${where}
+      ORDER BY p.precio ASC NULLS LAST
+      LIMIT ${TOPE}`,
+    params
+  );
+
+  return { total: conteo.rows[0].n, mostradas: rows.length, propiedades: rows };
+}
+
+module.exports = { construirFiltro, buscar, esNumero, esTexto, TOPE };

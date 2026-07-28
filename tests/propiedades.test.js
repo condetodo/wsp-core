@@ -1,6 +1,19 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
-const { construirFiltro } = require('../cliente/propiedades');
+const { construirFiltro, buscar, TOPE } = require('../cliente/propiedades');
+
+// Pool falso: registra las consultas y devuelve respuestas preparadas. buscar()
+// recibe el pool por parámetro justamente para poder probarla sin base.
+function poolFalso(respuestas) {
+  const consultas = [];
+  return {
+    consultas,
+    query: async (sql, params) => {
+      consultas.push({ sql, params });
+      return respuestas.shift() || { rows: [] };
+    },
+  };
+}
 
 test('sin criterios, sólo filtra por disponible', () => {
   const { where, params } = construirFiltro({});
@@ -67,4 +80,58 @@ test('los criterios se combinan con AND', () => {
   });
   assert.strictEqual(where.split(' AND ').length, 7); // disponible + 6 criterios
   assert.deepStrictEqual(params, ['venta', 'casa', '%Pilar%', 3, 'USD', 200000]);
+});
+
+// --- buscar() -------------------------------------------------------------
+
+test('con precio sin moneda no consulta la base y pide preguntar', async () => {
+  // Cortocircuito: no tiene sentido gastar una query sabiendo que el tope se ignora.
+  const pool = poolFalso([]);
+  const r = await buscar(pool, { precio_max: 300000 });
+  assert.strictEqual(pool.consultas.length, 0);
+  assert.match(r.aviso, /pesos o en dólares/);
+});
+
+test('devuelve el total y las propiedades encontradas', async () => {
+  const pool = poolFalso([
+    { rows: [{ n: 12 }] },
+    { rows: [{ id: 1, zona: 'Pilar' }, { id: 2, zona: 'Pilar' }] },
+  ]);
+  const r = await buscar(pool, { operacion: 'alquiler' });
+  assert.strictEqual(r.total, 12);
+  assert.strictEqual(r.mostradas, 2);
+  assert.strictEqual(r.propiedades.length, 2);
+});
+
+test('el total sirve para que el agente pida acotar', async () => {
+  // 23 encontradas pero 5 mostradas: el bot tiene que poder decir "hay 23".
+  const pool = poolFalso([
+    { rows: [{ n: 23 }] },
+    { rows: new Array(TOPE).fill({ id: 1 }) },
+  ]);
+  const r = await buscar(pool, {});
+  assert.strictEqual(r.total, 23);
+  assert.strictEqual(r.mostradas, TOPE);
+});
+
+test('la consulta acota los resultados al tope', async () => {
+  const pool = poolFalso([{ rows: [{ n: 0 }] }, { rows: [] }]);
+  await buscar(pool, {});
+  assert.match(pool.consultas[1].sql, new RegExp(`LIMIT ${TOPE}`));
+});
+
+test('trae el desarrollo con LEFT JOIN, no INNER', async () => {
+  // Con INNER JOIN las propiedades sueltas (desarrollo_id null) desaparecerían.
+  const pool = poolFalso([{ rows: [{ n: 0 }] }, { rows: [] }]);
+  await buscar(pool, {});
+  assert.match(pool.consultas[1].sql, /LEFT JOIN desarrollos/);
+  assert.match(pool.consultas[1].sql, /d\.nombre AS desarrollo/);
+});
+
+test('las dos consultas usan los mismos parámetros del filtro', async () => {
+  // Si el COUNT y el SELECT filtraran distinto, el total mentiría.
+  const pool = poolFalso([{ rows: [{ n: 3 }] }, { rows: [] }]);
+  await buscar(pool, { operacion: 'venta', zona: 'Pilar' });
+  assert.deepStrictEqual(pool.consultas[0].params, pool.consultas[1].params);
+  assert.deepStrictEqual(pool.consultas[0].params, ['venta', '%Pilar%']);
 });
